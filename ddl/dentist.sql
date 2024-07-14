@@ -48,9 +48,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE spGetAllDentist (
-    IN p_id INT
-)
+CREATE PROCEDURE spGetAllDentist ()
 BEGIN
     SELECT * FROM dentist;
 END //
