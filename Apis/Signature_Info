@@ -1,0 +1,156 @@
+import json
+from fastapi import FastAPI,Body,HTTPException
+from fastapi.responses import JSONResponse
+import pymysql
+from pydantic import BaseModel
+from datetime import date
+import mangum
+
+app = FastAPI()
+
+class Signatureinfo(BaseModel):
+    child_id :int
+    form_id :int
+    parent_sign : str
+    parent_date : date
+    admin_sign : str
+    admin_date : date
+    
+def database_connectivity():
+    
+    try:
+        connection = pymysql.connect(
+            host="localhost", 
+            port=3306,
+            user= "root",
+            password="12345678",
+            database="goddard_local",
+            cursorclass=pymysql.cursors.DictCursor 
+        )
+        return connection
+    except pymysql.MySQLError as err:
+        print(f"Error connecting to database: {err}")
+        return None
+    
+@app.get("/test")
+def get_test():
+    return {"response": "Test get call successfully called"}
+ 
+ #post call   
+@app.post("/signatureinfo/add")
+def add_signatureinfo(signatureinfo:Signatureinfo = Body()):
+    connection = database_connectivity()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+    
+    try:
+        
+        with connection.cursor() as cursor:
+          
+            sql = "CALL spCreateSignatureInfo( %s,%s,%s,%s,%s,%s)"
+            cursor.execute(sql, (signatureinfo.child_id,signatureinfo.form_id,signatureinfo.parent_sign,
+                                 signatureinfo.parent_date,signatureinfo.admin_sign,signatureinfo.admin_date))
+            connection.commit()
+
+            return {"message": "Signatureinfo Saved Successfully"}  
+
+        
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+            
+
+
+# PUT call
+@app.put("/signatureinfo/update/{id}")
+def update_signatureinfo( id:int, signatureinfo:Signatureinfo  = Body(...)):
+    connection = database_connectivity()
+    if not connection:
+            raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+            with connection.cursor() as cursor:
+                sql = "CALL  spUpdateSignatureInfo(%s,%s,%s,%s,%s,%s)"
+                cursor.execute(sql, (id, signatureinfo.form_id,signatureinfo.parent_sign,
+                                 signatureinfo.parent_date,signatureinfo.admin_sign,signatureinfo.admin_date))
+                connection.commit()
+
+                return {"message": f"Signatureinfo updated successfully"}
+
+    except pymysql.MySQLError as err:
+            raise HTTPException(status_code=500, detail=f"MySQL Error: {err}")
+    except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Unexpected Error: {str(e)}")
+    finally:
+            connection.close()
+            
+
+#delete call
+@app.delete("/signature/delete/{id}")
+def delete_classname( id:int):
+    connection = database_connectivity()
+    if not connection:
+            raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+            with connection.cursor() as cursor:
+                sql = "CALL  spDeleteSignatureInfo(%s)"
+                cursor.execute(sql, (id, ))
+                connection.commit()
+
+                return {"message": f"Signatureinfo deleted  successfully"}
+
+    except pymysql.MySQLError as err:
+            raise HTTPException(status_code=500, detail=f"MySQL Error: {err}")
+    except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Unexpected Error: {str(e)}")
+    finally:
+            connection.close()
+            
+            
+# GET call
+@app.get("/signatureinfo/getbyid/{id}")
+def get_signatureinfo_by_id(id: int):
+    connection = database_connectivity()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spReadSignatureInfo(%s, %s)"
+            cursor.execute(sql, (id, 1))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"SignatureInfo with id {id} not found")
+    except pymysql.MySQLError as err:
+        raise HTTPException(status_code=500, detail=f"MySQL Error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected Error: {str(e)}")
+    finally:
+        connection.close()
+        
+        
+# GET all records
+@app.get("/signatureinfo/getall",response_class=JSONResponse)
+def get_all_signatureinfo():
+    connection = database_connectivity()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM signature_info"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return JSONResponse(content=json.loads(json.dumps(result)))
+    except pymysql.MySQLError as err:
+        raise HTTPException(status_code=500, detail=f"MySQL Error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected Error: {str(e)}")
+    finally:
+        connection.close()
