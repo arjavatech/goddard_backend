@@ -1,10 +1,9 @@
 CREATE TABLE class_details (
     class_id INT NOT NULL AUTO_INCREMENT,
     class_name VARCHAR(255),
-    PRIMARY KEY (classId)
+    PRIMARY KEY (class_id)
 );
 
------------- STORED PROCEDURE ------------
 
 ------------ CREATE ------------
 
@@ -32,6 +31,20 @@ BEGIN
     SELECT * FROM class_details
     WHERE 
         class_id = p_classId;
+END //
+
+DELIMITER ;
+
+
+------------ READALL ------------
+
+DELIMITER //
+
+ CREATE PROCEDURE spGetAllClass(
+)
+BEGIN
+    SELECT * FROM class_details;
+   
 END //
 
 DELIMITER ;
@@ -68,3 +81,4 @@ BEGIN
 END //
 
 DELIMITER ;
+

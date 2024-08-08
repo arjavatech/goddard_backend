@@ -1,6 +1,3 @@
-CREATE DATABASE goddardTest;
-USE goddardTest;
-
 CREATE TABLE care_provider (
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -30,7 +27,7 @@ CREATE PROCEDURE ⁠spCreateCareProvider⁠(
 BEGIN
     INSERT INTO care_provider (name, telephone_number, hospital_affiliation, street_address, city_address, state_address, zip_address)
     VALUES (p_name, p_telephone_number, p_hospital_affiliation, p_street_address, p_city_address, p_state_address, p_zip_address);
-END //
+END
 
 DELIMITER ;
 
@@ -65,7 +62,7 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE ⁠ spUpdateCareProvider⁠(
-    IN p_care_provider_id INT,
+    IN p_id INT,
     IN p_name VARCHAR(255),
     IN p_telephone_number VARCHAR(20),
     IN p_hospital_affiliation VARCHAR(255),
@@ -76,12 +73,16 @@ CREATE PROCEDURE ⁠ spUpdateCareProvider⁠(
 )
 BEGIN
     UPDATE care_provider
-    SET name = p_name, telephone_number = p_telephone_number, hospital_affiliation = p_hospital_affiliation, street_address = p_street_address, city_address = p_city_address, state_address = p_state_address, zip_address = p_zip_address
-    WHERE id = p_care_provider_id;
-END //
-
-DELIMITER ;
-
+    SET 
+        name = p_name,
+        telephone_number = p_telephone_number,
+        hospital_affiliation = p_hospital_affiliation,
+        street_address = p_street_address,
+        city_address = p_city_address,
+        state_address = p_state_address,
+        zip_address = p_zip_address
+    WHERE id = p_id;
+END
 ------------ DELETE ------------
 
 DELIMITER //
@@ -92,6 +93,6 @@ CREATE PROCEDURE ⁠ spDeleteCareProvider ⁠(
 BEGIN
     DELETE FROM care_provider
     WHERE id = p_care_provider_id;
-END //
+END
 
 DELIMITER ;

@@ -9,10 +9,7 @@ CREATE TABLE dentist (
     PRIMARY KEY (id)
 );
 
------------- STORED PROCEDURE ------------
-
 ------------ CREATE ------------
-
 
 DELIMITER //
 
@@ -27,11 +24,11 @@ CREATE PROCEDURE spCreateDentist (
 BEGIN
     INSERT INTO dentist (name, telephone_number, street_address, city_address, state_address, zip_address)
     VALUES (p_name, p_telephone_number, p_street_address, p_city_address, p_state_address, p_zip_address);
-END //
+END
 
 DELIMITER ;
 
------------- READ ------------
+------------ GET ------------
     
 
 DELIMITER //
@@ -45,6 +42,7 @@ END //
 
 DELIMITER ;
 
+----------------------------GET ALL--------------------------
 
 DELIMITER //
 
@@ -83,7 +81,6 @@ END //
 DELIMITER ;
 
 ------------ DELETE ------------
-
 
 DELIMITER //
 

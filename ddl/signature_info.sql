@@ -1,3 +1,4 @@
+
 CREATE TABLE signature_info (
     child_id INT,
     form_id INT,
@@ -9,7 +10,6 @@ CREATE TABLE signature_info (
     FOREIGN KEY (child_id) REFERENCES child_info(child_id),
     FOREIGN KEY (form_id) REFERENCES form_detail(form_id)
 );
-
 
 
 
@@ -47,6 +47,24 @@ CREATE PROCEDURE spReadSignatureInfo (
 BEGIN
     SELECT * FROM signature_info
     WHERE child_id = p_child_id AND form_id = p_form_id;
+END //
+
+DELIMITER ;
+
+
+
+
+------------ READ ALL ------------
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllSignatureInfo (
+    IN p_child_id INT,
+    IN p_form_id INT
+)
+BEGIN
+    SELECT * FROM signature_info
+    WHERE child_id = p_child_id ;
 END //
 
 DELIMITER ;
@@ -94,3 +112,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
+

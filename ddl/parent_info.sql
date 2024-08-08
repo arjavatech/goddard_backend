@@ -64,6 +64,7 @@ END //
 
 DELIMITER ;
 
+
 ------------ READ ------------
 
 
@@ -79,6 +80,19 @@ END //
 DELIMITER ;
 
 
+
+------------ READ ALL ------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllParentInfo (
+)
+BEGIN
+    SELECT * FROM parent_info ;
+END //
+
+DELIMITER ;
 
 
 ------------ UPDATE ------------
@@ -147,3 +161,6 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+

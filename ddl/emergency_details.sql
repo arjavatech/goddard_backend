@@ -1,3 +1,4 @@
+
 CREATE TABLE emergency_details (
     emergency_id INT NOT NULL AUTO_INCREMENT,
     contact_name VARCHAR(255) NOT NULL,
@@ -10,10 +11,14 @@ CREATE TABLE emergency_details (
     PRIMARY KEY (emergency_id)
 );
 
+
+
+------------ CREATE ------------
+
  DELIMITER //
 
--- Procedure to insert a new emergency contact
-CREATE PROCEDURE spCreateEmergencyContact(
+
+CREATE PROCEDURE spCreateEmergencyDetails(
     IN p_contact_name VARCHAR(255),
     IN p_contact_relationship VARCHAR(255),
     IN p_street_address VARCHAR(255),
@@ -33,10 +38,35 @@ END //
 DELIMITER ;
 
 
+------------ READ ------------
+
 DELIMITER //
 
--- Procedure to update an existing emergency contact
-CREATE PROCEDURE spUpdateEmergencyContact(
+CREATE PROCEDURE spGetEmergencyDetails(IN p_emergency_id INT)
+BEGIN
+    SELECT * FROM emergency_details WHERE emergency_id = p_emergency_id;
+END //
+
+DELIMITER ;
+
+
+------------ READ ALL ------------
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllEmergencyDetails()
+BEGIN
+    SELECT * FROM emergency_details;
+END //
+
+DELIMITER ;
+
+
+------------ UPDATE ------------
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateEmergencyDetails(
     IN p_emergency_id INT,
     IN p_contact_name VARCHAR(255),
     IN p_contact_relationship VARCHAR(255),
@@ -62,10 +92,11 @@ END //
 
 DELIMITER ;
 
+------------ DELETE ------------
 
 DELIMITER //
 
-CREATE PROCEDURE spDeleteEmergencyContact(
+CREATE PROCEDURE spDeleteEmergencyDetails(
     IN p_emergency_id INT
 )
 BEGIN

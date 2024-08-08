@@ -1,0 +1,11 @@
+Mysql table order :
+    parent_info
+    class_details
+    care_provider
+    dentist
+    child_info
+    emergency_details
+    emergency_contact
+    eorm_detail
+    parent_invite_info
+    signature_info

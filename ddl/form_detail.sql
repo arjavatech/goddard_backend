@@ -25,7 +25,20 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetFormDetail (
-    IN p_form_id INT
+    IN p_id INT
+)
+BEGIN
+    SELECT * FROM form_detail  WHERE form_id = p_id;
+END //
+
+DELIMITER ;
+
+
+------------ READ ALL ------------
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllFormDetail (
 )
 BEGIN
     SELECT * FROM form_detail;
