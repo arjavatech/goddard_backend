@@ -7,15 +7,19 @@ CREATE TABLE care_provider (
     city_address VARCHAR(100),
     state_address VARCHAR(50),
     zip_address VARCHAR(12),
+    is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (id)
 );
 
------------- STORED PROCEDURE ------------
 
------------- CREATE ------------
+-------------------- STORED PROCEDURE-------------------------
+
+-- ------------------CREATE---------------- 
+
+
 DELIMITER //
 
-CREATE PROCEDURE ⁠spCreateCareProvider⁠(
+CREATE PROCEDURE spCreateCareProvider(
     IN p_name VARCHAR(255),
     IN p_telephone_number VARCHAR(20),
     IN p_hospital_affiliation VARCHAR(255),
@@ -25,43 +29,73 @@ CREATE PROCEDURE ⁠spCreateCareProvider⁠(
     IN p_zip_address VARCHAR(12)
 )
 BEGIN
-    INSERT INTO care_provider (name, telephone_number, hospital_affiliation, street_address, city_address, state_address, zip_address)
-    VALUES (p_name, p_telephone_number, p_hospital_affiliation, p_street_address, p_city_address, p_state_address, p_zip_address);
-END
+    INSERT INTO care_provider (
+        name,
+        telephone_number,
+        hospital_affiliation,
+        street_address,
+        city_address,
+        state_address,
+        zip_address,
+        is_active
+    )
+    VALUES (
+        p_name,
+        p_telephone_number,
+        p_hospital_affiliation,
+        p_street_address,
+        p_city_address,
+        p_state_address,
+        p_zip_address,
+        TRUE
+    );
+END //
 
 DELIMITER ;
 
 
------------- READ ------------
+
+
+-- ------------- GET -----------------
 
 
 DELIMITER //
 
-CREATE PROCEDURE ⁠ spGetCareProvider ⁠(
-    IN p_care_provider_id INT
+CREATE PROCEDURE spGetCareProvider(
+    IN p_id INT
 )
 BEGIN
     SELECT * FROM care_provider
-    WHERE id = p_care_provider_id;
+    WHERE id = p_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
+
+
+-- ------------- GET ALL ----------------
+
+
 DELIMITER //
 
-CREATE PROCEDURE ⁠ spGetAllCareProvider ⁠()
+CREATE PROCEDURE spGetAllCareProviders()
 BEGIN
-    SELECT * FROM care_provider;
+    SELECT * FROM care_provider
+    WHERE is_active = TRUE;
 END //
 
 DELIMITER ;
 
------------- UPDATE ------------
+
+ 
+
+-- ------------- UPDATE ----------------
+
 
 DELIMITER //
 
-CREATE PROCEDURE ⁠ spUpdateCareProvider⁠(
+CREATE PROCEDURE spUpdateCareProvider(
     IN p_id INT,
     IN p_name VARCHAR(255),
     IN p_telephone_number VARCHAR(20),
@@ -81,18 +115,29 @@ BEGIN
         city_address = p_city_address,
         state_address = p_state_address,
         zip_address = p_zip_address
-    WHERE id = p_id;
-END
------------- DELETE ------------
+    WHERE 
+        id = p_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+-- ------------- DELETE ----------------
+
 
 DELIMITER //
 
-CREATE PROCEDURE ⁠ spDeleteCareProvider ⁠(
-    IN p_care_provider_id INT
+CREATE PROCEDURE spDeleteCareProvider(
+    IN p_id INT
 )
 BEGIN
-    DELETE FROM care_provider
-    WHERE id = p_care_provider_id;
-END
+    UPDATE care_provider
+    SET is_active = FALSE
+    WHERE id = p_id;
+END //
 
 DELIMITER ;
+
+

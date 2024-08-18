@@ -1,153 +1,149 @@
-
-from fastapi import Body, FastAPI
+from fastapi import FastAPI, HTTPException, Body
+from pydantic import BaseModel
 import pymysql
 
+# Initialize FastAPI
 app = FastAPI()
 
+# Database connection function
 def connect_to_database():
     try:
         connection = pymysql.connect(
             host="localhost",
             port=3306,
             user="root",
-            password="Sandy@2025",
-            database="goddardTest",
+            password="mysqlroot",
+            database="sample",
             cursorclass=pymysql.cursors.DictCursor
         )
         return connection
     except pymysql.MySQLError as err:
         print(f"Error connecting to database: {err}")
         return None
-    
 
-@app.get("/test")
-def get_test():
-    return {"response": "Test get call successfully called"}
+# Dentist Schema
+class Dentist(BaseModel):
+    name: str
+    telephone_number: str
+    street_address: str
+    city_address: str
+    state_address: str
+    zip_address: str
 
+# --------- Dentist Endpoints ---------
 
-@app.get("/dentist/getAll")
-def get_all_dentists():
+@app.post("/dentist/create")  
+async def create_dentist(dentist: Dentist = Body(...)):
     connection = connect_to_database()
     if not connection:
         return {"error": "Failed to connect to database"}
 
     try:
         with connection.cursor() as cursor:
-            sql = "call goddardmodel.spGetAllDentist();"
-            cursor.execute(sql)
-            myresult = cursor.fetchall()
-            return myresult
-    except pymysql.MySQLError as err:
-        print(f"Error fetching data: {err}")
-        return {"error": str(err)}
-    finally:
-        connection.close()
-# ________________________________________________________________________________________________
-
-@app.get("/dentist/get/{id}")
-def get_dentists(id):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "call goddardmodel.spGetDentist(%s);"
-            cursor.execute(sql,(id,))
-            myresult = cursor.fetchall()
-            return myresult
-    except pymysql.MySQLError as err:
-        print(f"Error fetching data: {err}")
-        return {"error": str(err)}
-    finally:
-        connection.close()
-
-# ________________________________________________________________________________________________
-
-@app.post("/dentist/create")
-def create_dentist(Body:dict = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-    try:
-        with connection.cursor() as cursor:
-            name = Body.get("name")
-            telephone_number = Body.get("telephone_number")
-            street_address =Body.get("street_address")
-            city_address = Body.get("city_address")
-            state_address = Body.get("state_address")
-            zip_address = Body.get("zip_address")
-            sql = "call goddardmodel.spCreateDentist(%s,%s,%s,%s,%s,%s);"
-            
-            cursor.execute(sql,(name,telephone_number,street_address,city_address,state_address,zip_address,))
+            sql = "CALL spCreateDentist(%s, %s, %s, %s, %s, %s);"
+            cursor.execute(sql, (
+                dentist.name,
+                dentist.telephone_number,
+                dentist.street_address,
+                dentist.city_address,
+                dentist.state_address,
+                dentist.zip_address
+            ))
             connection.commit()
+
             return {"message": "Dentist created successfully"}
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
-        return {"error": str(err)}
+        raise HTTPException(status_code=500, detail="Database error")
     finally:
-        connection.close()
+        if connection:
+            connection.close()
 
-# ________________________________________________________________________________________________
-
-@app.put("/dentist/update/{id}")
-def create_dentist(id:str, Body = Body(...)):
+@app.get("/dentist/get/{id}")  
+async def get_dentist(id: int):
     connection = connect_to_database()
     if not connection:
-        return {"error": "Failed to connect to database"}
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            name = Body.get("name")
-            telephone_number = Body.get("telephone_number")
-            street_address =Body.get("street_address")
-            city_address = Body.get("city_address")
-            state_address = Body.get("state_address")
-            zip_address = Body.get("zip_address")
-            sql = "CALL spUpdateDentist(%s,%s,%s,%s,%s,%s,%s)"
-            
-            cursor.execute(sql,(id,name,telephone_number,street_address,city_address,state_address,zip_address))
-            connection.commit()
-            return {"message": "Dentist updated successfully", "Dentist-ID": id}
+            sql = "CALL spGetDentist(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Dentist with id {id} not found")
     except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        return {"error": str(err)}
+        print(f"Error fetching dentist: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
     finally:
-        connection.close()
-
-# ________________________________________________________________________________________________
-
-@app.delete("/dentist/delete/{id}")
-def delete_dentist(id : str):
-        connection = connect_to_database()
-        if not connection:
-            return {"error": "Failed to connect to database"}
-
-        try:
-            with connection.cursor() as cursor:
-                sql = "call spDeleteDentist(%s);"
-                cursor.execute(sql, id)
-                connection.commit()
-                return {"message": "Dentist deleted successfully" , "Dentist-ID": id}
-        except pymysql.MySQLError as err:
-            print(f"Error calling stored procedure: {err}")
-            return {"error": str(err)}
-        finally:
+        if connection:
             connection.close()
 
+@app.get("/dentist/getall")  
+async def get_all_dentists():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
 
-        connection = connect_to_database()
-        if not connection:
-            return {"error": "Failed to connect to database"}
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllDentists();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching dentists: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
 
-        try:
-            with connection.cursor() as cursor:
-                sql = "call spDeleteDentist(%s);"
-                cursor.execute(sql, id)
-                connection.commit()
-                return {"message": "Dentist deleted successfully" , "Dentist-ID": id}
-        except pymysql.MySQLError as err:
-            print(f"Error calling stored procedure: {err}")
-            return {"error": str(err)}
-        finally:
+@app.put("/dentist/update/{id}")  
+async def update_dentist(id: int, dentist: Dentist = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateDentist(%s, %s, %s, %s, %s, %s, %s);"
+            cursor.execute(sql, (
+                id,
+                dentist.name,
+                dentist.telephone_number,
+                dentist.street_address,
+                dentist.city_address,
+                dentist.state_address,
+                dentist.zip_address
+            ))
+            connection.commit()
+
+            return {"message": f"Dentist with id {id} updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating dentist: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/dentist/delete/{id}")  
+async def delete_dentist(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteDentist(%s);"
+            cursor.execute(sql, (id,))
+            connection.commit()
+
+            return {"message": f"Dentist with id {id} deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting dentist: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
             connection.close()

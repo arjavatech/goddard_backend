@@ -1,4 +1,3 @@
-
 CREATE TABLE emergency_details (
     emergency_id INT NOT NULL AUTO_INCREMENT,
     contact_name VARCHAR(255) NOT NULL,
@@ -8,17 +7,19 @@ CREATE TABLE emergency_details (
     state_address VARCHAR(255) NOT NULL,
     zip_address VARCHAR(20) NOT NULL,
     contact_telephone_number VARCHAR(20) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (emergency_id)
 );
 
 
+-------------------- STORED PROCEDURE-------------------------
 
------------- CREATE ------------
-
- DELIMITER //
+-- ------------------CREATE---------------- 
 
 
-CREATE PROCEDURE spCreateEmergencyDetails(
+DELIMITER //
+
+CREATE PROCEDURE spCreateEmergencyDetail(
     IN p_contact_name VARCHAR(255),
     IN p_contact_relationship VARCHAR(255),
     IN p_street_address VARCHAR(255),
@@ -29,44 +30,75 @@ CREATE PROCEDURE spCreateEmergencyDetails(
 )
 BEGIN
     INSERT INTO emergency_details (
-        contact_name, contact_relationship, street_address, city_address, state_address, zip_address, contact_telephone_number
-    ) VALUES (
-        p_contact_name, p_contact_relationship, p_street_address, p_city_address, p_state_address, p_zip_address, p_contact_telephone_number
+        contact_name, 
+        contact_relationship, 
+        street_address, 
+        city_address, 
+        state_address, 
+        zip_address, 
+        contact_telephone_number, 
+        is_active
+    )
+    VALUES (
+        p_contact_name, 
+        p_contact_relationship, 
+        p_street_address, 
+        p_city_address, 
+        p_state_address, 
+        p_zip_address, 
+        p_contact_telephone_number, 
+        TRUE
     );
 END //
 
 DELIMITER ;
 
 
------------- READ ------------
+
+
+
+-- ------------- GET -----------------
+
 
 DELIMITER //
 
-CREATE PROCEDURE spGetEmergencyDetails(IN p_emergency_id INT)
+CREATE PROCEDURE spGetEmergencyDetail(
+    IN p_emergency_id INT
+)
 BEGIN
-    SELECT * FROM emergency_details WHERE emergency_id = p_emergency_id;
+    SELECT * FROM emergency_details
+    WHERE emergency_id = p_emergency_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
------------- READ ALL ------------
+
+
+
+-- ------------- GET ALL ----------------
+
 
 DELIMITER //
 
 CREATE PROCEDURE spGetAllEmergencyDetails()
 BEGIN
-    SELECT * FROM emergency_details;
+    SELECT * FROM emergency_details
+    WHERE is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
------------- UPDATE ------------
+
+ 
+
+-- ------------- UPDATE ----------------
+
 
 DELIMITER //
 
-CREATE PROCEDURE spUpdateEmergencyDetails(
+CREATE PROCEDURE spUpdateEmergencyDetail(
     IN p_emergency_id INT,
     IN p_contact_name VARCHAR(255),
     IN p_contact_relationship VARCHAR(255),
@@ -87,22 +119,26 @@ BEGIN
         zip_address = p_zip_address,
         contact_telephone_number = p_contact_telephone_number
     WHERE 
-        emergency_id = p_emergency_id;
+        emergency_id = p_emergency_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
------------- DELETE ------------
+
+
+
+-- ------------- DELETE ----------------
+
 
 DELIMITER //
 
-CREATE PROCEDURE spDeleteEmergencyDetails(
+CREATE PROCEDURE spDeleteEmergencyDetail(
     IN p_emergency_id INT
 )
 BEGIN
-    DELETE FROM emergency_details
-    WHERE 
-        emergency_id = p_emergency_id;
+    UPDATE emergency_details
+    SET is_active = FALSE
+    WHERE emergency_id = p_emergency_id;
 END //
 
 DELIMITER ;

@@ -1,11 +1,15 @@
 CREATE TABLE class_details (
     class_id INT NOT NULL AUTO_INCREMENT,
-    class_name VARCHAR(255),
+    class_name VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (class_id)
 );
 
 
------------- CREATE ------------
+
+-------------------- STORED PROCEDURE-------------------------
+
+-- ------------------CREATE---------------- 
 
 
 DELIMITER //
@@ -14,43 +18,51 @@ CREATE PROCEDURE spCreateClass(
     IN p_className VARCHAR(255)
 )
 BEGIN
-    INSERT INTO class_details (class_name)
-    VALUES (p_className);
+    INSERT INTO class_details (class_name, is_active)
+    VALUES (p_className, TRUE);
 END //
 
- DELIMITER ;
+DELIMITER ;
 
------------- READ ------------
+
+
+-- ------------- GET -----------------
+
 
 DELIMITER //
 
- CREATE PROCEDURE spGetClass(
+CREATE PROCEDURE spGetClass(
     IN p_classId INT
 )
 BEGIN
     SELECT * FROM class_details
     WHERE 
-        class_id = p_classId;
+        class_id = p_classId AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
------------- READALL ------------
 
-DELIMITER //
+-- ------------- GET ALL ----------------
 
- CREATE PROCEDURE spGetAllClass(
-)
+
+ DELIMITER //
+
+CREATE PROCEDURE spGetAllClass()
 BEGIN
-    SELECT * FROM class_details;
-   
+    SELECT * FROM class_details
+    WHERE 
+        is_active = TRUE;
 END //
 
 DELIMITER ;
 
------------- UPDATE ------------
  
+
+-- ------------- UPDATE ----------------
+
+
 DELIMITER //
 
 CREATE PROCEDURE spUpdateClass(
@@ -62,12 +74,15 @@ BEGIN
     SET 
         class_name = p_className
     WHERE 
-        class_id = p_classId;
-END//
+        class_id = p_classId AND is_active = TRUE;
+END //
 
 DELIMITER ;
 
------------- DELETE ------------
+
+
+-- ------------- DELETE ----------------
+
 
 DELIMITER //
 
@@ -75,7 +90,8 @@ CREATE PROCEDURE spDeleteClass(
     IN p_classId INT
 )
 BEGIN
-    DELETE FROM class_details
+    UPDATE class_details
+    SET is_active = FALSE
     WHERE 
         class_id = p_classId;
 END //

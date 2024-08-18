@@ -17,13 +17,16 @@ CREATE TABLE parent_info (
     business_state_address VARCHAR(50),
     business_zip_address VARCHAR(12),
     business_cell_number VARCHAR(20),
+    is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (id)
 );
 
 
 
+---------------- STORED PROCEDURE----------------------
 
------------- CREATE ------------
+----------------CREATE---------------- 
+
 
 DELIMITER //
 
@@ -48,24 +51,16 @@ CREATE PROCEDURE spCreateParentInfo (
 )
 BEGIN
     INSERT INTO parent_info (
-        email, name, street_address, city_address, state_address, zip_address, 
-        home_telephone_number, home_cellphone_number, business_name, 
-        work_hours_from, work_hours_to, business_telephone_number, 
-        business_street_address, business_city_address, business_state_address, 
-        business_zip_address, business_cell_number
+        email, name, street_address, city_address, state_address, zip_address, home_telephone_number, home_cellphone_number, business_name, work_hours_from, work_hours_to, business_telephone_number, business_street_address, business_city_address, business_state_address, business_zip_address, business_cell_number, is_active
     ) VALUES (
-        p_email, p_name, p_street_address, p_city_address, p_state_address, p_zip_address, 
-        p_home_telephone_number, p_home_cellphone_number, p_business_name, 
-        p_work_hours_from, p_work_hours_to, p_business_telephone_number, 
-        p_business_street_address, p_business_city_address, p_business_state_address, 
-        p_business_zip_address, p_business_cell_number
+        p_email, p_name, p_street_address, p_city_address, p_state_address, p_zip_address, p_home_telephone_number, p_home_cellphone_number, p_business_name, p_work_hours_from, p_work_hours_to, p_business_telephone_number, p_business_street_address, p_business_city_address, p_business_state_address, p_business_zip_address, p_business_cell_number, TRUE
     );
 END //
 
 DELIMITER ;
 
 
------------- READ ------------
+------------- GET -----------------
 
 
 DELIMITER //
@@ -74,28 +69,30 @@ CREATE PROCEDURE spGetParentInfo (
     IN p_id INT
 )
 BEGIN
-    SELECT * FROM parent_info WHERE id = p_id;
+    SELECT * 
+    FROM parent_info 
+    WHERE id = p_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
-
------------- READ ALL ------------
+------------ GET ALL ----------------
 
 
 DELIMITER //
 
-CREATE PROCEDURE spGetAllParentInfo (
-)
+CREATE PROCEDURE spGetAllParentInfo ()
 BEGIN
-    SELECT * FROM parent_info ;
+    SELECT * 
+    FROM parent_info 
+    WHERE is_active = TRUE;
 END //
 
 DELIMITER ;
+ 
 
-
------------- UPDATE ------------
+------------- UPDATE ----------------
 
 
 DELIMITER //
@@ -122,7 +119,7 @@ CREATE PROCEDURE spUpdateParentInfo (
 )
 BEGIN
     UPDATE parent_info
-    SET
+    SET 
         email = p_email,
         name = p_name,
         street_address = p_street_address,
@@ -140,15 +137,14 @@ BEGIN
         business_state_address = p_business_state_address,
         business_zip_address = p_business_zip_address,
         business_cell_number = p_business_cell_number
-    WHERE id = p_id;
+    WHERE id = p_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
 
-
------------- DELETE ------------
+------------- DELETE ----------------
 
 
 DELIMITER //
@@ -157,10 +153,11 @@ CREATE PROCEDURE spDeleteParentInfo (
     IN p_id INT
 )
 BEGIN
-    DELETE FROM parent_info WHERE id = p_id;
+    UPDATE parent_info
+    SET is_active = FALSE
+    WHERE id = p_id;
 END //
 
 DELIMITER ;
-
 
 
