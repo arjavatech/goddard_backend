@@ -224,6 +224,101 @@ async def get_all_parent_invites():
         if connection:
             connection.close()
 
+@app.get("/parent_invite_info/all")
+async def get_parent_invites():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllParentInvites();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/all_parent_email")
+async def get_parent_invite_emails():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllParentInviteEmails()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/invite_status/{email}")
+async def get_parent_invite_status(email: str):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetParentInviteStatus(%s)"
+            cursor.execute(sql, email)
+            result = cursor.fetchone()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/accepted_invite")
+async def get_parent_accepted_invite_emails():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllParentAcceptedInviteEmails()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/not_accepted_invite")
+async def get_parent_not_accepted_invite_emails():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllParentNotAcceptedInviteEmails()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
 @app.put("/parent_invite_info/update/{email}")
 async def update_parent_invite(email: str, invite: ParentInvite = Body(...)):
     connection = connect_to_database()
@@ -490,6 +585,23 @@ def get_parent_info(id: int):
 
 @app.get("/parent_info/getall")  
 def get_all_parent_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            sql = "CALL spGetAllParentInfo();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        connection.close()
+
+@app.get("/admission_parent_info/all")  
+def get_all_admission_parent_info():
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
@@ -1966,6 +2078,202 @@ async def delete_emergency_contact(emergency_id: int, child_id: int):
             return {"message": "Emergency contact deleted successfully"}
     except pymysql.MySQLError as err:
         print(f"Error deleting emergency contact: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.get("/goddard_all_form/all")
+async def get_goddard_all_form_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllFormInfo();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/goddard_all_form/fetch/{form_id}")
+async def fetch_form_info(form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetFormInfo(%s);"
+            cursor.execute(sql, (form_id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Form info with id {form_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/goddard_all_form/all_active_forms")
+async def get_goddard_all_form_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllActiveFormInfo()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/goddard_all_form/all_inactive_forms")
+async def get_goddard_all_form_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllInActiveFormInfo()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/goddard_all_form/all_main_topic")
+async def get_goddard_all_form_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllMainTopicFormInfo()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/goddard_all_form/form_status/{form_id}")
+async def fetch_form_info(form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetFormInfoStatus(%s);"
+            cursor.execute(sql, (form_id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Form info with id {form_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.get("/sign_up/all")
+async def get_all_signup():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllSignUpInfo();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching signup_info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/sign_up/is_admin/{email}")
+async def fetch_form_info(email: str):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetIsAdminEmail(%s);"
+            cursor.execute(sql, (email,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Form info with id {form_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.post("/sign_up/add")
+async def create_signup_info(signup_info: SignUpInfo = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
+            cursor.execute(sql, (signup_info.email_id, signup_info.invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
+            connection.commit()
+
+            return {"message": "SignUpInfo created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:

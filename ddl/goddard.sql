@@ -2313,3 +2313,130 @@ DELIMITER ;
 
 
 
+-- Additional Sql
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllParentInviteEmails`()
+BEGIN
+    SELECT email AS parent_email FROM parent_invite_info
+    WHERE is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetParentInviteStatus`(
+    IN p_email VARCHAR(255)
+)
+BEGIN
+    SELECT invite_status AS message FROM parent_invite_info
+    WHERE email = p_email AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllParentAcceptedInviteEmails`()
+BEGIN
+    SELECT email AS parent_email FROM parent_invite_info
+    WHERE is_active = TRUE AND invite_status = "Accepted";
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllParentNotAcceptedInviteEmails`()
+BEGIN
+    SELECT email AS parent_email FROM parent_invite_info
+    WHERE is_active = TRUE AND invite_status = "Not Accepted";
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllActiveFormInfo`()
+BEGIN
+    SELECT * FROM all_form_info
+    WHERE 
+        is_active = TRUE AND form_status = "Active";
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllInActiveFormInfo`()
+BEGIN
+    SELECT * FROM all_form_info
+    WHERE 
+        is_active = TRUE AND form_status = "Inactive";
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllMainTopicFormInfo`()
+BEGIN
+    SELECT main_topic FROM all_form_info
+    WHERE 
+        is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetFormInfoStatus`(
+    IN p_form_id INT
+)
+BEGIN
+    SELECT form_status FROM all_form_info
+    WHERE form_id = p_form_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllSignUpInfo`()
+BEGIN
+    SELECT email_id,
+    invite_id,
+    password,
+    CASE 
+        WHEN admin = 0 THEN false
+        ELSE true
+    END AS admin,
+    CASE 
+        WHEN temp_password = 0 THEN false
+        ELSE true
+    END AS temp_password
+    
+    FROM signup_info
+    
+    WHERE is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetIsAdminEmail`(
+	IN p_email_id VARCHAR(255)
+)
+BEGIN
+    SELECT admin
+    FROM signup_info
+    WHERE is_active = TRUE AND email_id = p_email_id;
+END //
+
+DELIMITER ;
