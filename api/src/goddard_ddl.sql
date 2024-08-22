@@ -2440,3 +2440,29 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllAdmissionFormsCount`()
+BEGIN
+    SELECT COUNT(*) AS count
+    FROM admission_form 
+    WHERE is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllAdmissionFormsChildNames`()
+BEGIN
+    SELECT child_id, child_first_name
+    FROM admission_form 
+    WHERE is_active = TRUE;
+END //
+
+DELIMITER ;
+

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, Union
 import pymysql
 import mangum
+import yagmail
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -174,8 +175,38 @@ async def create_parent_invite(invite: ParentInvite = Body(...)):
             sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
             cursor.execute(sql, (invite.email, invite.invite_id, invite.parent_name, invite.child_full_name, invite.invite_status, invite.signed_up_email))
             connection.commit()
+            sender = 'noreply.goddard@gmail.com'
+            app_password = 'ynir rnbf owdn mapx'
 
-            return {"message": "Parent invite created successfully"}
+
+            subject = "Invitation to Create an Account for The Goddard school Admission"
+
+
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <p>Dear {invite.parent_name},</p>
+                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
+                    <p style="text-align: center;">
+                        <a href="{invite.invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                    </p>
+                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
+                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+
+                </div>
+            </body>
+            </html>
+            """
+
+            # Initialize Yagmail with the sender's Gmail credentials
+            yag = yagmail.SMTP(user=sender, password=app_password)
+
+            # Sending the email with HTML table in the body and Excel attachment
+            yag.send(to=invite.email, subject=subject, contents=html_content)
+
+            return {"message": "Parent invite created and Email sent successfully!"}
+
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -330,8 +361,38 @@ async def update_parent_invite(email: str, invite: ParentInvite = Body(...)):
             sql = "CALL spUpdateParentInvite(%s, %s, %s, %s, %s, %s);"
             cursor.execute(sql, (email, invite.invite_id, invite.parent_name, invite.child_full_name, invite.invite_status, invite.signed_up_email))
             connection.commit()
+            sender = 'noreply.goddard@gmail.com'
+            app_password = 'ynir rnbf owdn mapx'
 
-            return {"message": f"Parent invite with email {email} updated successfully"}
+
+            subject = "Invitation to Create an Account for The Goddard school Admission"
+
+
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <p>Dear {invite.parent_name},</p>
+                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
+                    <p style="text-align: center;">
+                        <a href="{invite.invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                    </p>
+                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
+                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+
+                </div>
+            </body>
+            </html>
+            """
+
+            # Initialize Yagmail with the sender's Gmail credentials
+            yag = yagmail.SMTP(user=sender, password=app_password)
+
+            # Sending the email with HTML table in the body and Excel attachment
+            yag.send(to=invite.email, subject=subject, contents=html_content)
+
+            return {"message": f"Parent invite with email {email} updated successfully and Email sent successfully!"}
+
     except pymysql.MySQLError as err:
         print(f"Error updating parent invite: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -1964,16 +2025,6 @@ async def delete_emergency_detail(id: int):
             connection.close()
 
 
-
-
-
-
-
-
-
-
-
-
 # EmergencyContact Schema
 class EmergencyContact(BaseModel):
     emergency_id: int
@@ -2280,5 +2331,162 @@ async def create_signup_info(signup_info: SignUpInfo = Body(...)):
             connection.close()
 
 
+# mail trigger
+@app.post("/mail/send")
+async def create_parent_invite_and_mail_trigger(invite: ParentInvite = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
+            cursor.execute(sql, (invite.email, invite.invite_id, invite.parent_name, invite.child_full_name, invite.invite_status, invite.signed_up_email))
+            connection.commit()
+            sender = 'noreply.goddard@gmail.com'
+            app_password = 'ynir rnbf owdn mapx'
+
+
+            subject = "Invitation to Create an Account for The Goddard school Admission"
+
+
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <p>Dear {invite.parent_name},</p>
+                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
+                    <p style="text-align: center;">
+                        <a href="{invite.invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                    </p>
+                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
+                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+
+                </div>
+            </body>
+            </html>
+            """
+
+            # Initialize Yagmail with the sender's Gmail credentials
+            yag = yagmail.SMTP(user=sender, password=app_password)
+
+            # Sending the email with HTML table in the body and Excel attachment
+            yag.send(to=invite.email, subject=subject, contents=html_content)
+
+            return {"message": "Parent invite created and Email sent successfully!"}
+
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+# mail trigger
+@app.post("/forget_password/{email}")
+async def password_change(email: str):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+
+            sql = "CALL spGetSignUpInfo(%s);"
+            cursor.execute(sql, (email,))
+            result = cursor.fetchone()
+            
+            if result:
+                parent_invite_sql = "CALL spGetParentInvite(%s);"
+                cursor.execute(parent_invite_sql, (email,))
+                parent_invite_detail = cursor.fetchone()
+
+                if parent_invite_detail:
+                    sender = 'noreply.goddard@gmail.com'
+                    app_password = 'ynir rnbf owdn mapx'
+
+
+                    subject = "Reset Your Password for The Goddard school Admission Portal"
+
+
+                    html_content = f"""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                        <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <p>Dear {parent_invite_detail["parent_name"]},</p>
+                            <p>We hope this message finds you well. It appears that you have requested to reset your password for your account on the <strong>The Goddard school</strong> admission portal.<br><br>To reset your password and regain access to your account, please click on the link below:</p>
+                            <p style="text-align: center;">
+                                <a href="{result["invite_id"]}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
+                            </p>
+                            <p>Once you have reset your password, you will be able to log in and continue with the admission process. If you did not request a password reset or have any questions, please do not hesitate to contact our support team for assistance.<br><br>hank you for your attention to this matter. We look forward to assisting you with the admission process and welcoming your son, {parent_invite_detail["child_full_name"]}, to The Goddard School.</p>
+                            <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+
+                        </div>
+                    </body>
+                    </html>
+                    """
+
+                    # Initialize Yagmail with the sender's Gmail credentials
+                    yag = yagmail.SMTP(user=sender, password=app_password)
+
+                    # Sending the email with HTML table in the body and Excel attachment
+                    yag.send(to=email, subject=subject, contents=html_content)
+
+                    return {"message": "Password reset email sent successfully!"}
+            else:
+                raise HTTPException(status_code=404, detail=f"SignUpInfo with email_id {email} not found")
+    except pymysql.MySQLError:
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/child_count")  
+async def get_all_admission_forms_count():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllAdmissionFormsCount();"
+            cursor.execute(sql)
+            result = cursor.fetchone()
+            if result:
+                return result["count"]
+            else:
+                return 0
+    except pymysql.MySQLError as err:
+        print(f"Error fetching admission forms: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/all_child_names")  
+async def get_all_admission_forms_child_names():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllAdmissionFormsChildNames();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            if result:
+                return result
+            else:
+                return 0
+    except pymysql.MySQLError as err:
+        print(f"Error fetching admission forms: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+ 
 
 handler=mangum.Mangum(app)
