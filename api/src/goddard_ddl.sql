@@ -1471,10 +1471,7 @@ DELIMITER ;
 
 
 
-
-
 CREATE TABLE authorization_form (
-    form_id INT NOT NULL AUTO_INCREMENT,
     child_id INT NOT NULL,
     bank_routing VARCHAR(255),
     bank_account VARCHAR(255),
@@ -1486,8 +1483,7 @@ CREATE TABLE authorization_form (
     admin_sign VARCHAR(255),
     admin_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (form_id),
-    FOREIGN KEY (child_id) REFERENCES admission_form(child_id)  -- Assumes child_info table has child_id
+    PRIMARY KEY (child_id) 
 );
 
 
@@ -1527,11 +1523,11 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetAuthorizationForm(
-    IN p_formId INT
+    IN p_childId INT
 )
 BEGIN
     SELECT * FROM authorization_form
-    WHERE form_id = p_formId AND is_active = TRUE;
+    WHERE child_id = p_childId AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -1559,7 +1555,6 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spUpdateAuthorizationForm(
-    IN p_formId INT,
     IN p_childId INT,
     IN p_bankRouting VARCHAR(255),
     IN p_bankAccount VARCHAR(255),
@@ -1572,8 +1567,6 @@ CREATE PROCEDURE spUpdateAuthorizationForm(
 BEGIN
     UPDATE authorization_form
     SET 
-        form_id = p_formId,
-        child_id = p_childId,
         bank_routing = p_bankRouting,
         bank_account = p_bankAccount,
         driver_license = p_driverLicense,
@@ -1582,7 +1575,7 @@ BEGIN
         parent_sign = p_parentSign,
         admin_sign = p_adminSign
     WHERE 
-        form_id = p_formId AND is_active = TRUE;
+        child_id = p_childId AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -1594,21 +1587,19 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spDeleteAuthorizationForm(
-    IN p_formId INT
+    IN p_childId INT
 )
 BEGIN
     UPDATE authorization_form
     SET is_active = FALSE
-    WHERE form_id = p_formId;
+    WHERE child_id = p_childId;
 END //
 
 DELIMITER ;
 
 
 
-
 CREATE TABLE enrollment_form (
-    form_id INT NOT NULL AUTO_INCREMENT,
     child_id INT NOT NULL,
     enrollment_name VARCHAR(255),
     point_one_field VARCHAR(255),
@@ -1638,8 +1629,7 @@ CREATE TABLE enrollment_form (
     admin_sign VARCHAR(255),
     admin_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (form_id),
-    FOREIGN KEY (child_id) REFERENCES admission_form(child_id)
+    PRIMARY KEY (child_id)
 );
 
 
@@ -1748,11 +1738,11 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetEnrollmentForm(
-    IN p_formId INT
+    IN p_child_id INT
 )
 BEGIN
     SELECT * FROM enrollment_form
-    WHERE form_id = p_formId AND is_active = TRUE;
+    WHERE child_id = p_child_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -1777,7 +1767,6 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spUpdateEnrollmentForm(
-    IN p_formId INT,
     IN p_childId INT,
     IN p_enrollmentName VARCHAR(255),
     IN p_pointOneField VARCHAR(255),
@@ -1808,8 +1797,6 @@ CREATE PROCEDURE spUpdateEnrollmentForm(
 BEGIN
     UPDATE enrollment_form
     SET 
-        form_id = p_formId,
-        child_id = p_childId,
         enrollment_name = p_enrollmentName,
         point_one_field = p_pointOneField,
         point_two_init = p_pointTwoInit,
@@ -1836,7 +1823,7 @@ BEGIN
         parent_sign = p_parentSign,
         admin_sign = p_adminSign
     WHERE 
-        form_id = p_formId AND is_active = TRUE;
+        child_id = p_childId AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -1847,12 +1834,12 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spDeleteEnrollmentForm(
-    IN p_formId INT
+    IN p_childId INT
 )
 BEGIN
     UPDATE enrollment_form
     SET is_active = FALSE
-    WHERE form_id = p_formId;
+    WHERE child_id = p_childId;
 END //
 
 DELIMITER ;
@@ -1860,10 +1847,7 @@ DELIMITER ;
 
 
 
-
-
 CREATE TABLE parent_handbook (
-    form_id INT NOT NULL AUTO_INCREMENT,
     child_id INT NOT NULL,
     welcome_goddard_agmt BOOLEAN,
     mission_statement_agmt BOOLEAN,
@@ -1888,8 +1872,7 @@ CREATE TABLE parent_handbook (
     admin_sign VARCHAR(255),
     admin_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (form_id),
-    FOREIGN KEY (child_id) REFERENCES admission_form(child_id)
+    PRIMARY KEY (child_id)
 );
 
 
@@ -1953,11 +1936,11 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetParentHandbook(
-    IN p_formId INT
+    IN p_childId INT
 )
 BEGIN
     SELECT * FROM parent_handbook
-    WHERE form_id = p_formId AND is_active = TRUE;
+    WHERE child_id = p_childId AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -1986,7 +1969,6 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spUpdateParentHandbook(
-    IN p_form_id INT,
     IN p_child_id INT,
     IN p_welcome_goddard_agmt BOOLEAN,
     IN p_mission_statement_agmt BOOLEAN,
@@ -2012,7 +1994,6 @@ CREATE PROCEDURE spUpdateParentHandbook(
 BEGIN
     UPDATE parent_handbook
     SET 
-        child_id = p_child_id,
         welcome_goddard_agmt = p_welcome_goddard_agmt,
         mission_statement_agmt = p_mission_statement_agmt,
         general_information_agmt = p_general_information_agmt,
@@ -2034,7 +2015,7 @@ BEGIN
         parent_sign = p_parent_sign,
         admin_sign = p_admin_sign
     WHERE 
-        form_id = p_form_id AND is_active = TRUE;
+        child_id = p_child_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -2047,15 +2028,16 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spDeleteParentHandbook(
-    IN p_formId INT
+    IN p_child_id INT
 )
 BEGIN
     UPDATE parent_handbook
     SET is_active = FALSE
-    WHERE form_id = p_formId;
+    WHERE child_id = p_child_id;
 END //
 
 DELIMITER ;
+
 
 
 
@@ -2466,3 +2448,234 @@ END //
 
 DELIMITER ;
 
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAuthorizationFormStatus`(
+    IN p_childId INT
+)
+BEGIN
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status
+    FROM authorization_form
+    WHERE child_id = p_childId AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetEnrollmentFormStatus`(
+    IN p_childId INT
+)
+BEGIN
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status
+    FROM enrollment_form
+    WHERE child_id = p_childId AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetParentHandbookStatus`(
+    IN p_childId INT
+)
+BEGIN
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status
+    FROM parent_handbook
+    WHERE child_id = p_childId AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetPersonalInfoAllFormStatus`(
+    IN p_childId INT
+)
+BEGIN
+SELECT 
+    CASE 
+		WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "admission_form" AS formname,
+    admin_date AS completedTimestamp
+    FROM admission_form
+    WHERE child_id = p_childId AND is_active = TRUE
+    
+    UNION
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "authorization_form" AS formname,
+    admin_date AS completedTimestamp
+    FROM authorization_form
+    WHERE child_id = p_childId AND is_active = TRUE
+    
+    UNION
+    
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "enrollment_form" AS formname,
+    admin_date AS completedTimestamp
+    FROM enrollment_form
+    WHERE child_id = p_childId AND is_active = TRUE
+    
+    UNION
+    
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "parent_handbook" AS formname,
+    admin_date AS completedTimestamp
+    FROM parent_handbook
+    WHERE child_id = p_childId AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetParentBasedChildList`(
+    IN p_email VARCHAR(255)
+)
+BEGIN
+	SELECT 
+        af.child_id, 
+        af.child_first_name, 
+        af.child_last_name, 
+        pi.name AS parent_name
+    FROM 
+        admission_form af
+    INNER JOIN 
+        parent_info pi 
+    ON 
+        af.parent_id = pi.id
+    WHERE 
+        pi.email = p_email 
+        AND pi.is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetYearBasedAllFormStatus`(
+    IN p_childId INT,
+    IN p_year INT
+)
+BEGIN
+SELECT 
+    CASE 
+		WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "admission_form" AS formname,
+    admin_date AS completedTimestamp
+    FROM admission_form
+    WHERE child_id = p_childId AND is_active = TRUE AND YEAR(admin_date) =  p_year
+    
+    UNION
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "authorization_form" AS formname,
+    admin_date AS completedTimestamp
+    FROM authorization_form
+    WHERE child_id = p_childId AND is_active = TRUE AND YEAR(admin_date) =  p_year
+    
+    UNION
+    
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "enrollment_form" AS formname,
+    admin_date AS completedTimestamp
+    FROM enrollment_form
+    WHERE child_id = p_childId AND is_active = TRUE AND YEAR(admin_date) =  p_year
+    
+    UNION
+    
+    SELECT 
+    CASE 
+        WHEN admin_sign IS NULL AND parent_sign IS NULL THEN "Incomplete"
+		WHEN admin_sign IS NULL THEN "Approval Pending"
+        ELSE "Completed"
+    END AS form_status,
+    "parent_handbook" AS formname,
+    admin_date AS completedTimestamp
+    FROM parent_handbook
+    WHERE child_id = p_childId AND is_active = TRUE AND YEAR(admin_date) =  p_year;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spUpdateParentInviteAsInActive`(
+    IN p_email VARCHAR(255)
+)
+BEGIN
+    UPDATE parent_invite_info
+    SET 
+        invite_status = "InActive",
+        signed_up_mail = p_email
+    WHERE 
+        email = p_email AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spUpdateSignUpInfoInviteID`(
+    IN p_email_id VARCHAR(255),
+    IN p_invite_id VARCHAR(255)
+)
+BEGIN
+    UPDATE signup_info
+    SET 
+        invite_id = p_invite_id
+    WHERE 
+        email_id = p_email_id AND is_active = TRUE;
+END //
+
+DELIMITER ;

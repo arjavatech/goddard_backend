@@ -7,6 +7,7 @@ from typing import Optional, Union
 import pymysql
 import mangum
 import yagmail
+import uuid
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,7 +33,6 @@ def connect_to_database():
         print(f"Error connecting to database: {err}")
         return None
 
-
 @app.get("/test")
 def get_test():
     return {"response": "Test get call successfully called"}
@@ -55,8 +55,13 @@ async def create_signup_info(signup_info: SignUpInfo = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            uuid1 = uuid.uuid1()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
-            cursor.execute(sql, (signup_info.email_id, signup_info.invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
+            cursor.execute(sql, (signup_info.email_id, invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
+            connection.commit()
+            sql2 = "CALL spUpdateParentInviteAsInActive(%s)"
+            cursor.execute(sql2, signup_info.email_id,)
             connection.commit()
 
             return {"message": "SignUpInfo created successfully"}
@@ -149,10 +154,6 @@ async def delete_signup_info(email_id: str):
             connection.close()
 
 
-
-
-
-
 # ParentInvite Schema
 class ParentInvite(BaseModel):
     email: str
@@ -172,8 +173,10 @@ async def create_parent_invite(invite: ParentInvite = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            uuid1 = uuid.uuid1()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (invite.email, invite.invite_id, invite.parent_name, invite.child_full_name, invite.invite_status, invite.signed_up_email))
+            cursor.execute(sql, (invite.email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
             connection.commit()
             sender = 'noreply.goddard@gmail.com'
             app_password = 'ynir rnbf owdn mapx'
@@ -189,7 +192,7 @@ async def create_parent_invite(invite: ParentInvite = Body(...)):
                     <p>Dear {invite.parent_name},</p>
                     <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
                     <p style="text-align: center;">
-                        <a href="{invite.invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
                     </p>
                     <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
                     <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
@@ -358,9 +361,12 @@ async def update_parent_invite(email: str, invite: ParentInvite = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            uuid1 = uuid.uuid1()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spUpdateParentInvite(%s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (email, invite.invite_id, invite.parent_name, invite.child_full_name, invite.invite_status, invite.signed_up_email))
+            cursor.execute(sql, (email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
             connection.commit()
+
             sender = 'noreply.goddard@gmail.com'
             app_password = 'ynir rnbf owdn mapx'
 
@@ -375,7 +381,7 @@ async def update_parent_invite(email: str, invite: ParentInvite = Body(...)):
                     <p>Dear {invite.parent_name},</p>
                     <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
                     <p style="text-align: center;">
-                        <a href="{invite.invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
                     </p>
                     <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
                     <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
@@ -419,12 +425,6 @@ async def delete_parent_invite(email: str):
     finally:
         if connection:
             connection.close()
-
-
-
-
-
-
 
 
 
@@ -1428,6 +1428,7 @@ class AuthorizationForm(BaseModel):
 
 # --------- AuthorizationForm Endpoints ---------
 
+
 @app.post("/authorization_form/create")
 async def create_authorization_form(form: AuthorizationForm = Body(...)):
     connection = connect_to_database()
@@ -1506,11 +1507,11 @@ async def update_authorization_form(id: int, form: AuthorizationForm = Body(...)
         with connection.cursor() as cursor:
             sql = """
             CALL spUpdateAuthorizationForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
-                id, form.child_id, form.bank_routing, form.bank_account, form.driver_license,
+                form.child_id, form.bank_routing, form.bank_account, form.driver_license,
                 form.state, form.myself, form.parent_sign, form.admin_sign
             ))
             connection.commit()
@@ -1544,6 +1545,7 @@ async def delete_authorization_form(id: int):
             connection.close()
 
 
+
 # EnrollmentForm Schema
 class EnrollmentForm(BaseModel):
     child_id: int
@@ -1574,6 +1576,8 @@ class EnrollmentForm(BaseModel):
     admin_sign: str
 
 # --------- EnrollmentForm Endpoints ---------
+
+
 
 @app.post("/enrollment_form/create")  
 async def create_enrollment(enrollment: EnrollmentForm = Body(...)):
@@ -1655,10 +1659,10 @@ async def update_enrollment(id: int, enrollment: EnrollmentForm = Body(...)):
     try:
         with connection.cursor() as cursor:
             sql = """CALL spUpdateEnrollmentForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );"""
             cursor.execute(sql, (
-                id, enrollment.child_id, enrollment.enrollment_name, enrollment.point_one_field, enrollment.point_two_init,
+                enrollment.child_id, enrollment.enrollment_name, enrollment.point_one_field, enrollment.point_two_init,
                 enrollment.point_three_ini, enrollment.point_four_init, enrollment.point_five_init, enrollment.point_six_init,
                 enrollment.point_seven_init, enrollment.point_eight_init, enrollment.point_nine_init, enrollment.point_ten_init,
                 enrollment.point_eleven_init, enrollment.point_twelve_init, enrollment.point_thirteen_init, enrollment.point_fourteen_init,
@@ -1695,13 +1699,6 @@ async def delete_enrollment(id: int):
     finally:
         if connection:
             connection.close()
-
-
-
-
-
-
-
 
 
 # ParentHandbook Schema
@@ -1817,8 +1814,8 @@ async def get_all_parent_handbooks():
         if connection:
             connection.close()
 
-@app.put("/parent_handbook/update/{id}")
-async def update_parent_handbook(id: int, parent_handbook: ParentHandbook = Body(...)):
+@app.put("/parent_handbook/update/{child_id}")
+async def update_parent_handbook(child_id: int, parent_handbook: ParentHandbook = Body(...)):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
@@ -1827,11 +1824,10 @@ async def update_parent_handbook(id: int, parent_handbook: ParentHandbook = Body
         with connection.cursor() as cursor:
             sql = """
                 CALL spUpdateParentHandbook(
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 );
             """
             cursor.execute(sql, (
-                id,
                 parent_handbook.child_id,
                 parent_handbook.welcome_goddard_agmt,
                 parent_handbook.mission_statement_agmt,
@@ -1883,7 +1879,6 @@ async def delete_parent_handbook(id: int):
     finally:
         if connection:
             connection.close()
-
 
 
 
@@ -2318,8 +2313,10 @@ async def create_signup_info(signup_info: SignUpInfo = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            uuid1 = uuid.uuid1()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
-            cursor.execute(sql, (signup_info.email_id, signup_info.invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
+            cursor.execute(sql, (signup_info.email_id, invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
             connection.commit()
 
             return {"message": "SignUpInfo created successfully"}
@@ -2340,8 +2337,10 @@ async def create_parent_invite_and_mail_trigger(invite: ParentInvite = Body(...)
 
     try:
         with connection.cursor() as cursor:
+            uuid1 = uuid.uuid1()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (invite.email, invite.invite_id, invite.parent_name, invite.child_full_name, invite.invite_status, invite.signed_up_email))
+            cursor.execute(sql, (invite.email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
             connection.commit()
             sender = 'noreply.goddard@gmail.com'
             app_password = 'ynir rnbf owdn mapx'
@@ -2357,7 +2356,7 @@ async def create_parent_invite_and_mail_trigger(invite: ParentInvite = Body(...)
                     <p>Dear {invite.parent_name},</p>
                     <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
                     <p style="text-align: center;">
-                        <a href="{invite.invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
                     </p>
                     <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
                     <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
@@ -2392,10 +2391,14 @@ async def password_change(email: str):
 
     try:
         with connection.cursor() as cursor:
-
+            uuid1 = uuid.uuid1()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spGetSignUpInfo(%s);"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
+            sql2 = "CALL spUpdateSignUpInfoInviteID(%s, %s);"
+            cursor.execute(sql2, (email,invite_id))
+            connection.commit()
             
             if result:
                 parent_invite_sql = "CALL spGetParentInvite(%s);"
@@ -2417,7 +2420,7 @@ async def password_change(email: str):
                             <p>Dear {parent_invite_detail["parent_name"]},</p>
                             <p>We hope this message finds you well. It appears that you have requested to reset your password for your account on the <strong>The Goddard school</strong> admission portal.<br><br>To reset your password and regain access to your account, please click on the link below:</p>
                             <p style="text-align: center;">
-                                <a href="{result["invite_id"]}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
+                                <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
                             </p>
                             <p>Once you have reset your password, you will be able to log in and continue with the admission process. If you did not request a password reset or have any questions, please do not hesitate to contact our support team for assistance.<br><br>hank you for your attention to this matter. We look forward to assisting you with the admission process and welcoming your son, {parent_invite_detail["child_full_name"]}, to The Goddard School.</p>
                             <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
@@ -2486,7 +2489,245 @@ async def get_all_admission_forms_child_names():
         if connection:
             connection.close()
 
+@app.get("/bill_ach/form_status/{id}")
+async def get_authorization_form_status(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
 
- 
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAuthorizationFormStatus(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/enrollment_agreement/form_status/{id}")
+async def get_enrollment_form_status(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetEnrollmentFormStatus(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.get("/parent_handbook/form_status/{id}")
+async def get_parent_handbook_status(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetParentHandbookStatus(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/incomplete_form_status/{id}")
+async def get_personal_info_all_incomplete_form_status(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetPersonalInfoAllFormStatus(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchall()
+            incomplete_form_list = []
+            if result:
+                for data in result:
+                    if(data["form_status"] == "Incomplete"):
+                        incomplete_form_list.append(data["formname"])
+                return {
+                    "InCompletedFormStatus": incomplete_form_list
+                }
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/completed_form_status/{id}")
+async def get_personal_info_all_complete_form_status(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetPersonalInfoAllFormStatus(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchall()
+            incomplete_form_list = []
+            if result:
+                for data in result:
+                    if(data["form_status"] == "Completed"):
+                        incomplete_form_list.append({"formname" :data["formname"], "completedTimestamp": data["completedTimestamp"]})
+                return {
+                    "CompletedFormStatus": incomplete_form_list
+                }
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/all_form_status/{id}")
+async def get_personal_info_all__form_status(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetPersonalInfoAllFormStatus(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchall()
+            incomplete_form_list = []
+            completed_form_list = []
+            pending_form_list = []
+            if result:
+                for data in result:
+                    if(data["form_status"] == "Completed"):
+                        incomplete_form_list.append(data["formname"])
+                    elif(data["form_status"] == "Incomplete"):
+                        completed_form_list.append(data["formname"])
+                    else:
+                        pending_form_list.append(data["formname"])
+                return {
+                    "Completed Forms": completed_form_list,
+                    "Incomplete Forms": incomplete_form_list,
+                    "Approval Pending Forms": pending_form_list
+                }
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/parent_email/{id}")
+async def get_parent_all__child(id: str):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetParentBasedChildList(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchall()
+            children = []
+            parent = ""
+            if result:
+                for data in result:
+                    parent = data["parent_name"]
+                    children.append({
+                        "child_id": data["child_id"],
+                        "child_first_name": data["child_first_name"],
+                        "child_last_name": data["child_last_name"]
+
+                    })
+                return { "children": children,
+                        "parent_name": parent
+                }
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/all_child_personal")  
+async def get_all_personal_forms():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllAdmissionForms();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching admission forms: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/completed_form_status_year/{id}/{year}")
+async def get_personal_info_all_complete_form_status_based_on_year(id: int, year: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetYearBasedAllFormStatus(%s, %s);"
+            cursor.execute(sql, (id,year))
+            result = cursor.fetchall()
+            completed_form_list = []
+            if result:
+                for data in result:
+                    if(data["form_status"] == "Completed"):
+                        completed_form_list.append({"formname" :data["formname"], "completedTimestamp": data["completedTimestamp"]})
+                return {
+                    "CompletedFormStatus": completed_form_list
+                }
+            else:
+                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
 
 handler=mangum.Mangum(app)
