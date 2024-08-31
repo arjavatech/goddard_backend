@@ -2679,3 +2679,369 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+
+
+
+
+
+
+
+CREATE TABLE class_form_repository (
+    class_id INT,
+    form_id INT,
+    is_active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (form_id, class_id),
+    FOREIGN KEY (form_id) REFERENCES all_form_info(form_id),
+    FOREIGN KEY (class_id) REFERENCES class_details(class_id)
+);
+
+
+
+-------------------- STORED PROCEDURE-------------------------
+
+-- ------------------CREATE---------------- 
+
+
+DELIMITER //
+
+CREATE PROCEDURE spCreateClassFormRepository( 
+    IN p_classId INT,
+    IN p_formId INT
+)
+BEGIN
+    INSERT INTO class_form_repository (class_id, form_id, is_active)
+    VALUES (p_classId, p_formId, TRUE);
+END //
+
+DELIMITER ;
+
+
+
+
+-- ------------- GET -----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetClassFormRepository(
+    IN p_classId INT,
+    IN p_formId INT
+)
+BEGIN
+    SELECT * FROM class_form_repository
+    WHERE 
+        class_id = p_classId 
+        AND form_id = p_formId
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- GET ALL ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllClassFormRepository()
+BEGIN
+    SELECT * FROM class_form_repository
+    WHERE 
+        is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+ 
+
+-- ------------- UPDATE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateClassFormRepository(
+    IN p_oldClassId INT,
+    IN p_oldFormId INT,
+    IN p_newClassId INT,
+    IN p_newFormId INT
+)
+BEGIN
+    UPDATE class_form_repository
+    SET 
+        class_id = p_newClassId,
+        form_id = p_newFormId
+    WHERE 
+        class_id = p_oldClassId 
+        AND form_id = p_oldFormId
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+-- ------------- DELETE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteClassFormRepository(
+    IN p_classId INT,
+    IN p_formId INT
+)
+BEGIN
+    UPDATE class_form_repository
+    SET is_active = FALSE
+    WHERE 
+        class_id = p_classId 
+        AND form_id = p_formId;
+END //
+
+DELIMITER ;
+
+
+
+
+CREATE TABLE student_form_repository (
+    child_id INT,
+    form_id INT,
+    is_active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (child_id, form_id),
+    FOREIGN KEY (child_id) REFERENCES admission_form(child_id),
+    FOREIGN KEY (form_id) REFERENCES all_form_info(form_id)
+);
+
+
+
+-------------------- STORED PROCEDURE-------------------------
+
+-- ------------------CREATE---------------- 
+
+
+DELIMITER //
+
+CREATE PROCEDURE spCreateStudentFormRepository(
+    IN p_childId INT,
+    IN p_formId INT
+)
+BEGIN
+    INSERT INTO student_form_repository (child_id, form_id, is_active)
+    VALUES (p_childId, p_formId, TRUE);
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- GET -----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetStudentFormRepository(
+    IN p_childId INT,
+    IN p_formId INT
+)
+BEGIN
+    SELECT * FROM student_form_repository
+    WHERE 
+        child_id = p_childId 
+        AND form_id = p_formId 
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+
+
+-- ------------- GET ALL ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllStudentFormRepository()
+BEGIN
+    SELECT * FROM student_form_repository
+    WHERE is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+ 
+
+-- ------------- UPDATE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateStudentFormRepository(
+    IN p_oldChildId INT,
+    IN p_oldFormId INT,
+    IN p_newChildId INT,
+    IN p_newFormId INT
+)
+BEGIN
+    UPDATE student_form_repository
+    SET 
+        child_id = p_newChildId,
+        form_id = p_newFormId
+    WHERE 
+        child_id = p_oldChildId 
+        AND form_id = p_oldFormId 
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- DELETE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteStudentFormRepository(
+    IN p_childId INT,
+    IN p_formId INT
+)
+BEGIN
+    UPDATE student_form_repository
+    SET is_active = FALSE
+    WHERE 
+        child_id = p_childId 
+        AND form_id = p_formId;
+END //
+
+DELIMITER ;
+
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spAllStatusBasedOnForm`(
+    IN p_form_name VARCHAR(255)
+)
+BEGIN
+    -- Declare a variable to hold the dynamic SQL query
+    SET @sql_query = CONCAT(
+        'SELECT 
+            af.child_id,
+            CONCAT(adform.child_first_name, " ", adform.child_last_name) AS child_name,
+            
+            CASE 
+                WHEN af.admin_sign IS NULL AND af.parent_sign IS NULL THEN "Incomplete"
+                WHEN af.admin_sign IS NULL THEN "Approval Pending"
+                ELSE "Completed"
+            END AS form_status,
+            
+            "', p_form_name, '" AS formname,
+            
+            cl.class_name AS class_name,
+            p.email AS parent_email,
+            p2.email AS parent_two_email
+
+        FROM ', p_form_name, ' af  -- Dynamically use the table name here
+        LEFT JOIN admission_form adform ON af.child_id = adform.child_id  
+        LEFT JOIN class_details cl ON adform.classId = cl.class_id  
+        LEFT JOIN parent_info p ON adform.parent_id = p.id 
+        LEFT JOIN parent_info p2 ON adform.additional_parent_id = p2.id 
+
+        WHERE af.is_active = TRUE;'
+    );
+
+    -- Prepare and execute the dynamic SQL query
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END //
+
+DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllChildOverAllFormStatus`()
+BEGIN
+    SELECT 
+        af.child_id,
+        CONCAT(af.child_first_name, " " , af.child_last_name) AS child_name,
+        cl.class_name,
+        p.email AS parent_email,
+        p2.email AS parent_two_email,
+        CASE 
+            WHEN EXISTS (
+                SELECT 1
+                FROM (
+                    SELECT admin_sign, parent_sign 
+                    FROM admission_form 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                    UNION ALL
+                    SELECT admin_sign, parent_sign 
+                    FROM authorization_form 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                    UNION ALL
+                    SELECT admin_sign, parent_sign 
+                    FROM enrollment_form 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                    UNION ALL
+                    SELECT admin_sign, parent_sign 
+                    FROM parent_handbook 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                ) AS form_statuses
+                WHERE admin_sign IS NULL AND parent_sign IS NULL
+            ) THEN 'Incomplete'
+            
+            WHEN EXISTS (
+                SELECT 1
+                FROM (
+                    SELECT admin_sign, parent_sign 
+                    FROM admission_form 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                    UNION ALL
+                    SELECT admin_sign, parent_sign 
+                    FROM authorization_form 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                    UNION ALL
+                    SELECT admin_sign, parent_sign 
+                    FROM enrollment_form 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                    UNION ALL
+                    SELECT admin_sign, parent_sign 
+                    FROM parent_handbook 
+                    WHERE child_id = af.child_id AND is_active = TRUE
+                ) AS form_statuses
+                WHERE admin_sign IS NULL AND parent_sign IS NOT NULL
+            ) THEN 'Approval Pending'
+            
+            ELSE 'Completed'
+        END AS final_form_status
+    FROM 
+        admission_form af
+        LEFT JOIN class_details cl ON af.classId = cl.class_id  
+        LEFT JOIN parent_info p ON af.parent_id = p.id 
+        LEFT JOIN parent_info p2 ON af.additional_parent_id = p2.id 
+    WHERE 
+        af.is_active = TRUE
+    GROUP BY 
+        af.child_id;
+END //
+
+DELIMITER ;

@@ -9,6 +9,7 @@ pymysql = "*"
 mangum = "*"
 cryptography = "*"
 yagmail = "*"
+shortuuid = "*"
 
 [dev-packages]
 

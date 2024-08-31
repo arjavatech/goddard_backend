@@ -7,7 +7,7 @@ from typing import Optional, Union
 import pymysql
 import mangum
 import yagmail
-import uuid
+import shortuuid
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -55,7 +55,7 @@ async def create_signup_info(signup_info: SignUpInfo = Body(...)):
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = uuid.uuid1()
+            uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
             cursor.execute(sql, (signup_info.email_id, invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
@@ -173,7 +173,7 @@ async def create_parent_invite(invite: ParentInvite = Body(...)):
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = uuid.uuid1()
+            uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
             cursor.execute(sql, (invite.email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
@@ -361,7 +361,7 @@ async def update_parent_invite(email: str, invite: ParentInvite = Body(...)):
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = uuid.uuid1()
+            uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spUpdateParentInvite(%s, %s, %s, %s, %s, %s);"
             cursor.execute(sql, (email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
@@ -2313,7 +2313,7 @@ async def create_signup_info(signup_info: SignUpInfo = Body(...)):
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = uuid.uuid1()
+            uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
             cursor.execute(sql, (signup_info.email_id, invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
@@ -2337,7 +2337,7 @@ async def create_parent_invite_and_mail_trigger(invite: ParentInvite = Body(...)
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = uuid.uuid1()
+            uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
             cursor.execute(sql, (invite.email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
@@ -2391,7 +2391,7 @@ async def password_change(email: str):
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = uuid.uuid1()
+            uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spGetSignUpInfo(%s);"
             cursor.execute(sql, (email,))
@@ -2724,6 +2724,279 @@ async def get_personal_info_all_complete_form_status_based_on_year(id: int, year
                 raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching authorization form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+# Schema for StudentFormRepository
+class StudentFormRepository(BaseModel):
+    child_id: int
+    form_id: int
+
+# --------- StudentFormRepository Endpoints ---------
+
+# Create a new entry in student_form_repository
+@app.post("/student_form_repository/create")
+async def create_student_form_repository(entry: StudentFormRepository = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateStudentFormRepository(%s, %s);"
+            cursor.execute(sql, (entry.child_id, entry.form_id))
+            connection.commit()
+            return {"message": "Student-Form link created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+# Get a specific entry from student_form_repository
+@app.get("/student_form_repository/get/{child_id}/{form_id}")
+async def get_student_form_repository(child_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetStudentFormRepository(%s, %s);"
+            cursor.execute(sql, (child_id, form_id))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail="Student-Form link not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching student-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+# Get all active entries from student_form_repository
+@app.get("/student_form_repository/getall")
+async def get_all_student_form_repository():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllStudentFormRepository();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching student-form links: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/student_form_repository/update/{child_id}/{form_id}")
+async def update_student_form_repository(
+    child_id: int,
+    form_id: int,
+    new_entry: StudentFormRepository = Body(...)
+):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+            cursor.execute(sql, (child_id, form_id, new_entry.child_id, new_entry.form_id))
+            connection.commit()
+            return {"message": "Student-Form link updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating student-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+            
+            
+# Soft delete a specific entry in student_form_repository
+@app.put("/student_form_repository/delete/{child_id}/{form_id}")
+async def delete_student_form_repository(child_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteStudentFormRepository(%s, %s);"
+            cursor.execute(sql, (child_id, form_id))
+            connection.commit()
+            return {"message": "Student-Form link deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting student-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+
+# Schema for ClassFormRepository
+class ClassFormRepository(BaseModel):
+    class_id: int
+    form_id: int
+
+# --------- ClassFormRepository Endpoints ---------
+
+@app.post("/class_form_repository/create")  
+async def create_class_form_repository(entry: ClassFormRepository = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateClassFormRepository(%s, %s);"
+            cursor.execute(sql, (entry.class_id, entry.form_id))
+            connection.commit()
+
+            return {"message": "Class-Form link created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/class_form_repository/get/{class_id}/{form_id}")  
+async def get_class_form_repository(class_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetClassFormRepository(%s, %s);"
+            cursor.execute(sql, (class_id, form_id))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Class-Form link not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching class-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/class_form_repository/getall")  
+async def get_all_class_form_repository():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllClassFormRepository();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching class-form links: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/class_form_repository/update/{class_id}/{form_id}")  
+async def update_class_form_repository(
+    class_id: int, form_id: int, 
+    new_entry: ClassFormRepository = Body(...)
+):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateClassFormRepository(%s, %s, %s, %s);"
+            cursor.execute(sql, (class_id, form_id, new_entry.class_id, new_entry.form_id))
+            connection.commit()
+
+            return {"message": "Class-Form link updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating class-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/class_form_repository/delete/{class_id}/{form_id}")  
+async def delete_class_form_repository(class_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteClassFormRepository(%s, %s);"
+            cursor.execute(sql, (class_id, form_id))
+            connection.commit()
+
+            return {"message": "Class-Form link deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting class-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.get("/admission_child_personal/form_status/{form_name}")
+async def get_all_status_based_on_form(form_name: str):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spAllStatusBasedOnForm(%s);"
+            cursor.execute(sql, (form_name,))
+            result = cursor.fetchall()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"{form_name} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching signup_info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/admission_child_personal/all_child_status")
+async def get_all_child_overall_form_status():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllChildOverAllFormStatus();"
+            cursor.execute(sql,)
+            result = cursor.fetchall()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail="No child found!!!!!")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching signup_info: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
