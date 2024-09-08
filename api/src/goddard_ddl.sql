@@ -1,10 +1,10 @@
-
-CREATE TABLE signup_info (
+CREATE DATABASE goddardtestdb;
+USE goddardtestdb; 
+CREATE TABLE admin_info (
     email_id VARCHAR(255) NOT NULL PRIMARY KEY,
-    invite_id VARCHAR(255),
     password VARCHAR(255),
-    admin BOOLEAN DEFAULT FALSE,
-    temp_password BOOLEAN DEFAULT FALSE,
+    designation VARCHAR(255),
+    apporved_by VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE
 );
 
@@ -12,16 +12,15 @@ CREATE TABLE signup_info (
 
 DELIMITER //
 
-CREATE PROCEDURE spCreateSignUpInfo(
+CREATE PROCEDURE spCreateAdminInfo(
     IN p_email_id VARCHAR(255),
-    IN p_invite_id VARCHAR(255),
     IN p_password VARCHAR(255),
-    IN p_admin BOOLEAN,
-    IN p_temp_password BOOLEAN
+    IN p_designation VARCHAR(255),
+    IN p_apporved_by VARCHAR(255)
 )
 BEGIN
-    INSERT INTO signup_info (email_id, invite_id, password, admin, temp_password, is_active)
-    VALUES (p_email_id, p_invite_id, p_password, p_admin, p_temp_password, TRUE);
+    INSERT INTO admin_info (email_id, password, designation, apporved_by, is_active)
+    VALUES (p_email_id, p_password, p_designation, p_apporved_by, TRUE);
 END //
 
 DELIMITER ;
@@ -30,23 +29,25 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE spGetSignUpInfo(
+CREATE PROCEDURE spGetAdminInfo(
     IN p_email_id VARCHAR(255)
 )
 BEGIN
-    SELECT * FROM signup_info
+    SELECT * FROM admin_info
     WHERE email_id = p_email_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
+
+
 -- ------------------ GET ALL ----------------
 
 DELIMITER //
 
-CREATE PROCEDURE spGetAllSignUpInfo()
+CREATE PROCEDURE spGetAllAdminInfo()
 BEGIN
-    SELECT * FROM signup_info
+    SELECT * FROM admin_info
     WHERE is_active = TRUE;
 END //
 
@@ -56,20 +57,19 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE spUpdateSignUpInfo(
+CREATE PROCEDURE spUpdateAdminInfo(
     IN p_email_id VARCHAR(255),
-    IN p_invite_id VARCHAR(255),
     IN p_password VARCHAR(255),
-    IN p_admin BOOLEAN,
-    IN p_temp_password BOOLEAN
+    IN p_designation VARCHAR(255),
+    IN p_apporved_by VARCHAR(255)
 )
 BEGIN
-    UPDATE signup_info
+    UPDATE admin_info
     SET 
-        invite_id = p_invite_id,
+       
         password = p_password,
-        admin = p_admin,
-        temp_password = p_temp_password
+        designation = p_designation,
+        apporved_by = p_apporved_by
     WHERE 
         email_id = p_email_id AND is_active = TRUE;
 END //
@@ -80,11 +80,11 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE spDeleteSignUpInfo(
+CREATE PROCEDURE spDeleteAdminInfo(
     IN p_email_id VARCHAR(255)
 )
 BEGIN
-    UPDATE signup_info
+    UPDATE admin_info
     SET is_active = FALSE
     WHERE 
         email_id = p_email_id;
@@ -94,147 +94,6 @@ DELIMITER ;
 
 
 
-
-CREATE TABLE parent_invite_info (
-    email VARCHAR(255) NOT NULL,
-    invite_id VARCHAR(255),
-    parent_name VARCHAR(255),
-    child_full_name VARCHAR(255),
-    invite_status VARCHAR(100),
-    signed_up_email VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (email)
-);
-
-
-
--------------------- STORED PROCEDURE-------------------------
-
--- ------------------CREATE---------------- 
-
-
-DELIMITER //
-
-CREATE PROCEDURE spCreateParentInvite(
-    IN p_email VARCHAR(255),
-    IN p_invite_id VARCHAR(255),
-    IN p_parent_name VARCHAR(255),
-    IN p_child_full_name VARCHAR(255),
-    IN p_invite_status VARCHAR(100),
-    IN p_signed_up_email VARCHAR(255)
-)
-BEGIN
-    INSERT INTO parent_invite_info (
-        email, 
-        invite_id, 
-        parent_name, 
-        child_full_name, 
-        invite_status, 
-        signed_up_email, 
-        is_active
-    )
-    VALUES (
-        p_email, 
-        p_invite_id, 
-        p_parent_name, 
-        p_child_full_name, 
-        p_invite_status, 
-        p_signed_up_email, 
-        TRUE
-    );
-END //
-
-DELIMITER ;
-
-
-
-
-
-
--- ------------- GET -----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spGetParentInvite(
-    IN p_email VARCHAR(255)
-)
-BEGIN
-    SELECT * FROM parent_invite_info
-    WHERE email = p_email AND is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
-
-
--- ------------- GET ALL ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spGetAllParentInvites()
-BEGIN
-    SELECT * FROM parent_invite_info
-    WHERE is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
- 
-
--- ------------- UPDATE ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spUpdateParentInvite(
-    IN p_email VARCHAR(255),
-    IN p_invite_id VARCHAR(255),
-    IN p_parent_name VARCHAR(255),
-    IN p_child_full_name VARCHAR(255),
-    IN p_invite_status VARCHAR(100),
-    IN p_signed_up_email VARCHAR(255)
-)
-BEGIN
-    UPDATE parent_invite_info
-    SET 
-        invite_id = p_invite_id,
-        parent_name = p_parent_name,
-        child_full_name = p_child_full_name,
-        invite_status = p_invite_status,
-        signed_up_email = p_signed_up_email
-    WHERE 
-        email = p_email AND is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
-
--- ------------- DELETE ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spDeleteParentInvite(
-    IN p_email VARCHAR(255)
-)
-BEGIN
-    UPDATE parent_invite_info
-    SET is_active = FALSE
-    WHERE email = p_email;
-END //
-
-DELIMITER ;
 
 
 
@@ -425,11 +284,10 @@ DELIMITER ;
 
 
 
-
 CREATE TABLE parent_info (
-    id INT NOT NULL AUTO_INCREMENT,
-    email VARCHAR(255) NOT NULL,
-    name VARCHAR(255),
+    parent_id INT NOT NULL AUTO_INCREMENT,
+    email VARCHAR(255),
+    parent_name VARCHAR(255),
     street_address VARCHAR(255),
     city_address VARCHAR(255),
     state_address VARCHAR(50),
@@ -445,8 +303,9 @@ CREATE TABLE parent_info (
     business_state_address VARCHAR(50),
     business_zip_address VARCHAR(12),
     business_cell_number VARCHAR(20),
+    password VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (id)
+    PRIMARY KEY (parent_id)
 );
 
 
@@ -455,10 +314,29 @@ CREATE TABLE parent_info (
 
 ----------------CREATE---------------- 
 
+DELIMITER //
+
+CREATE PROCEDURE spCreateParentInfoAndGetID (
+    IN p_name VARCHAR(255),
+    OUT parent_id INT
+)
+BEGIN
+    INSERT INTO parent_info (
+        parent_name
+    ) VALUES (
+        p_name
+    );
+    
+    -- Get the last inserted ID
+    SET parent_id = LAST_INSERT_ID();
+END //
+
+DELIMITER ;
+
 
 DELIMITER //
 
-CREATE PROCEDURE spCreateParentInfo (
+CREATE PROCEDURE spCreateParentInfoWithAllDetails (
     IN p_email VARCHAR(255),
     IN p_name VARCHAR(255),
     IN p_street_address VARCHAR(255),
@@ -475,14 +353,31 @@ CREATE PROCEDURE spCreateParentInfo (
     IN p_business_city_address VARCHAR(100),
     IN p_business_state_address VARCHAR(50),
     IN p_business_zip_address VARCHAR(12),
-    IN p_business_cell_number VARCHAR(20)
+    IN p_business_cell_number VARCHAR(20),
+    IN p_password VARCHAR(255)
 )
 BEGIN
     INSERT INTO parent_info (
-        email, name, street_address, city_address, state_address, zip_address, home_telephone_number, home_cellphone_number, business_name, work_hours_from, work_hours_to, business_telephone_number, business_street_address, business_city_address, business_state_address, business_zip_address, business_cell_number, is_active
+        email, parent_name, street_address, city_address, state_address, zip_address, home_telephone_number, home_cellphone_number, business_name, work_hours_from, work_hours_to, business_telephone_number, business_street_address, business_city_address, business_state_address, business_zip_address, business_cell_number, password, is_active
     ) VALUES (
-        p_email, p_name, p_street_address, p_city_address, p_state_address, p_zip_address, p_home_telephone_number, p_home_cellphone_number, p_business_name, p_work_hours_from, p_work_hours_to, p_business_telephone_number, p_business_street_address, p_business_city_address, p_business_state_address, p_business_zip_address, p_business_cell_number, TRUE
+        p_email, p_name, p_street_address, p_city_address, p_state_address, p_zip_address, p_home_telephone_number, p_home_cellphone_number, p_business_name, p_work_hours_from, p_work_hours_to, p_business_telephone_number, p_business_street_address, p_business_city_address, p_business_state_address, p_business_zip_address, p_business_cell_number, p_password, TRUE
     );
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE spCreateParentInfo (
+    IN p_name VARCHAR(255)
+)
+BEGIN
+    INSERT INTO parent_info (
+        parent_name
+        ) 
+    VALUES (
+        p_name
+        );
 END //
 
 DELIMITER ;
@@ -494,12 +389,24 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetParentInfo (
-    IN p_id INT
+    IN p_parent_id INT
 )
 BEGIN
     SELECT * 
     FROM parent_info 
-    WHERE id = p_id AND is_active = TRUE;
+    WHERE parent_id = p_parent_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE spGetParentInfoBasedEmail(
+    IN p_email_id VARCHAR(255)
+)
+BEGIN
+    SELECT * FROM parent_info
+    WHERE email = p_email_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -526,7 +433,7 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spUpdateParentInfo (
-    IN p_id INT,
+    IN p_parent_id INT,
     IN p_email VARCHAR(255),
     IN p_name VARCHAR(255),
     IN p_street_address VARCHAR(255),
@@ -543,13 +450,13 @@ CREATE PROCEDURE spUpdateParentInfo (
     IN p_business_city_address VARCHAR(100),
     IN p_business_state_address VARCHAR(50),
     IN p_business_zip_address VARCHAR(12),
-    IN p_business_cell_number VARCHAR(20)
+    IN p_business_cell_number VARCHAR(20),
+    IN p_password VARCHAR(255)
 )
 BEGIN
     UPDATE parent_info
     SET 
-        email = p_email,
-        name = p_name,
+        parent_name = p_name,
         street_address = p_street_address,
         city_address = p_city_address,
         state_address = p_state_address,
@@ -564,8 +471,29 @@ BEGIN
         business_city_address = p_business_city_address,
         business_state_address = p_business_state_address,
         business_zip_address = p_business_zip_address,
-        business_cell_number = p_business_cell_number
-    WHERE id = p_id AND is_active = TRUE;
+        business_cell_number = p_business_cell_number,
+        password = p_password
+    WHERE parent_id = p_parent_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateParentInfoPassword (
+    IN p_parent_id INT,
+    IN p_email VARCHAR(255),
+    IN p_password VARCHAR(255)
+)
+BEGIN
+    UPDATE parent_info
+    SET 
+        email = p_email,
+        password = p_password
+    WHERE parent_id = p_parent_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
@@ -578,15 +506,17 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spDeleteParentInfo (
-    IN p_id INT
+    IN p_parent_id INT
 )
 BEGIN
     UPDATE parent_info
     SET is_active = FALSE
-    WHERE id = p_id;
+    WHERE parent_id = p_parent_id;
 END //
 
 DELIMITER ;
+
+
 
 
 
@@ -970,17 +900,139 @@ END //
 DELIMITER ;
 
 
-CREATE TABLE admission_form (
-    child_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    parent_id INT,
-    additional_parent_id INT,
-    classId INT,
-    care_provider_id INT,
-    dentist_id INT,
+
+CREATE TABLE child_info (
+    child_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    parent_id VARCHAR(255),
+    class_id INT,
     child_first_name VARCHAR(100),
     child_last_name VARCHAR(100),
-    nick_name VARCHAR(100),
     dob DATE,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (class_id) REFERENCES class_details(class_id)
+);
+
+
+
+---------------- STORED PROCEDURE----------------------
+
+----------------CREATE---------------- 
+
+DELIMITER //
+
+CREATE PROCEDURE spCreateChildInfo(
+    IN p_parent_id VARCHAR(255),
+    IN p_class_id INT,
+    IN p_child_first_name VARCHAR(100),
+    IN p_child_last_name VARCHAR(100),
+    IN p_dob DATE,
+    OUT p_child_id INT
+)
+BEGIN
+    INSERT INTO child_info (
+        parent_id, class_id, child_first_name, child_last_name, dob, is_active
+    ) VALUES (
+        p_parent_id, p_class_id, p_child_first_name, p_child_last_name, p_dob, TRUE
+    );
+    
+    -- Get the last inserted ID
+    SET p_child_id = LAST_INSERT_ID();
+END //
+
+DELIMITER ;
+
+
+
+------------- GET -----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetChildInfo(
+    IN p_child_id INT
+)
+BEGIN
+    SELECT * FROM child_info
+    WHERE 
+        child_id = p_child_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+------------ GET ALL ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllChildInfo()
+BEGIN
+    SELECT * FROM child_info
+    WHERE 
+        is_active = TRUE;
+END //
+
+DELIMITER ;
+
+ 
+
+------------- UPDATE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateChildInfo(
+    IN p_child_id INT,
+    IN p_parent_id VARCHAR(255),
+    IN p_class_id INT,
+    IN p_child_first_name VARCHAR(100),
+    IN p_child_last_name VARCHAR(100),
+    IN p_dob DATE
+)
+BEGIN
+    UPDATE child_info
+    SET 
+        parent_id = p_parent_id,
+        class_id = p_class_id,
+        child_first_name = p_child_first_name,
+        child_last_name = p_child_last_name,
+        dob = p_dob
+    WHERE 
+        child_id = p_child_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+------------- DELETE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteChildInfo(
+    IN p_child_id INT
+)
+BEGIN
+    UPDATE child_info
+    SET 
+        is_active = FALSE
+    WHERE 
+        child_id = p_child_id;
+END //
+
+DELIMITER ;
+
+
+
+
+CREATE TABLE admission_form (
+    child_id INT NOT NULL PRIMARY KEY,
+    additional_parent_id INT,
+    care_provider_id INT,
+    dentist_id INT,
+    nick_name VARCHAR(100),
     primary_language VARCHAR(50),
     school_age_child_school VARCHAR(100),
     custody_papers_apply BOOLEAN,
@@ -1018,8 +1070,8 @@ CREATE TABLE admission_form (
     birth_weight_lbs VARCHAR(50),
     birth_weight_oz VARCHAR(50),
     complications TEXT,
-    bottle_fed BOOLEAN,
-    breast_fed BOOLEAN,
+    bottle_fed VARCHAR(50),
+    breast_fed VARCHAR(50),
     other_siblings_name VARCHAR(100),
     other_siblings_age VARCHAR(50),
     fam_hist_allergies BOOLEAN,
@@ -1054,8 +1106,8 @@ CREATE TABLE admission_form (
     childcare_before BOOLEAN,
     reason_for_childcare_before TEXT,
     what_child_interests TEXT,
-    drop_off_time TIME,
-    pick_up_time TIME,
+    drop_off_time VARCHAR(100),
+    pick_up_time VARCHAR(100),
     restricted_diet BOOLEAN,
     restricted_diet_reason TEXT,
     eat_own BOOLEAN,
@@ -1102,9 +1154,7 @@ CREATE TABLE admission_form (
     admin_sign VARCHAR(100),
     admin_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (parent_id) REFERENCES parent_info(id),
-    FOREIGN KEY (additional_parent_id) REFERENCES parent_info(id),
-    FOREIGN KEY (classId) REFERENCES class_details(class_id),
+    FOREIGN KEY (additional_parent_id) REFERENCES parent_info(parent_id),
     FOREIGN KEY (care_provider_id) REFERENCES care_provider(id),
     FOREIGN KEY (dentist_id) REFERENCES dentist(id)
 );
@@ -1117,39 +1167,187 @@ CREATE TABLE admission_form (
 
 DELIMITER //
 
-CREATE PROCEDURE spCreateAdmissionForm (
-    IN p_child_first_name VARCHAR(255),
-    IN p_child_last_name VARCHAR(255),
-    IN p_nick_name VARCHAR(255),
-    IN p_dob DATE,
-    IN p_primary_language VARCHAR(100),
-    IN p_school_age_child_school VARCHAR(255),
+CREATE PROCEDURE spCreateAdmissionForm(
+    IN p_child_id INT,
+    IN p_additional_parent_id INT,
+    IN p_care_provider_id INT,
+    IN p_dentist_id INT,
+    IN p_nick_name VARCHAR(100),
+    IN p_primary_language VARCHAR(50),
+    IN p_school_age_child_school VARCHAR(100),
     IN p_custody_papers_apply BOOLEAN,
-    IN p_gender VARCHAR(10)
+    IN p_gender VARCHAR(10),
+    IN p_special_diabilities TEXT,
+    IN p_allergies_reaction TEXT,
+    IN p_additional_info TEXT,
+    IN p_medication TEXT,
+    IN p_health_insurance TEXT,
+    IN p_policy_number VARCHAR(100),
+    IN p_emergency_medical_care TEXT,
+    IN p_first_aid_procedures TEXT,
+    IN p_above_info_is_correct BOOLEAN,
+    IN p_physical_exam_last_date DATE,
+    IN p_dental_exam_last_date DATE,
+    IN p_allergies TEXT,
+    IN p_asthma TEXT,
+    IN p_bleeding_problems TEXT,
+    IN p_diabetes TEXT,
+    IN p_epilepsy TEXT,
+    IN p_frequent_ear_infections TEXT,
+    IN p_frequent_illnesses TEXT,
+    IN p_hearing_problems TEXT,
+    IN p_high_fevers TEXT,
+    IN p_hospitalization TEXT,
+    IN p_rheumatic_fever TEXT,
+    IN p_seizures_convulsions TEXT,
+    IN p_serious_injuries_accidents TEXT,
+    IN p_surgeries TEXT,
+    IN p_vision_problems TEXT,
+    IN p_medical_other TEXT,
+    IN p_illness_in_pregnancy TEXT,
+    IN p_condition_of_newborn TEXT,
+    IN p_duration_of_pregnancy TEXT,
+    IN p_birth_weight_lbs VARCHAR(50),
+    IN p_birth_weight_oz VARCHAR(50),
+    IN p_complications TEXT,
+    IN p_bottle_fed VARCHAR(50),
+    IN p_breast_fed VARCHAR(50),
+    IN p_other_siblings_name VARCHAR(100),
+    IN p_other_siblings_age VARCHAR(50),
+    IN p_fam_hist_allergies BOOLEAN,
+    IN p_fam_hist_heart_problems BOOLEAN,
+    IN p_fam_hist_tuberculosis BOOLEAN,
+    IN p_fam_hist_asthma BOOLEAN,
+    IN p_fam_hist_high_blood_pressure BOOLEAN,
+    IN p_fam_hist_vision_problems BOOLEAN,
+    IN p_fam_hist_diabetes BOOLEAN,
+    IN p_fam_hist_hyperactivity BOOLEAN,
+    IN p_fam_hist_epilepsy BOOLEAN,
+    IN p_fam_hist_no_illness BOOLEAN,
+    IN p_age_group_friends VARCHAR(100),
+    IN p_neighborhood_friends VARCHAR(100),
+    IN p_relationship_with_mom VARCHAR(100),
+    IN p_relationship_with_dad VARCHAR(100),
+    IN p_relationship_with_sib VARCHAR(100),
+    IN p_relationship_extended_family VARCHAR(100),
+    IN p_fears_conflicts TEXT,
+    IN p_c_response_frustration TEXT,
+    IN p_favorite_activities TEXT,
+    IN p_last_five_years_moved BOOLEAN,
+    IN p_things_used_home VARCHAR(100),
+    IN p_hours_of_television_daily VARCHAR(50),
+    IN p_language_at_home VARCHAR(50),
+    IN p_changes_home_situation BOOLEAN,
+    IN p_educational_expectations_of_child TEXT,
+    IN p_fam_his_instructions BOOLEAN,
+    IN p_immunization_instructions BOOLEAN,
+    IN p_important_fam_members VARCHAR(100),
+    IN p_fam_celebrations VARCHAR(100),
+    IN p_childcare_before BOOLEAN,
+    IN p_reason_for_childcare_before TEXT,
+    IN p_what_child_interests TEXT,
+    IN p_drop_off_time VARCHAR(100),
+    IN p_pick_up_time VARCHAR(100),
+    IN p_restricted_diet BOOLEAN,
+    IN p_restricted_diet_reason TEXT,
+    IN p_eat_own BOOLEAN,
+    IN p_eat_own_reason TEXT,
+    IN p_favorite_foods TEXT,
+    IN p_rest_middle_day BOOLEAN,
+    IN p_reason_rest_middle_day TEXT,
+    IN p_rest_routine TEXT,
+    IN p_toilet_trained BOOLEAN,
+    IN p_reason_for_toilet_trained TEXT,
+    IN p_existing_illness_allergy BOOLEAN,
+    IN p_explain_illness_allergy TEXT,
+    IN p_functioning_at_age BOOLEAN,
+    IN p_explain_functioning_at_age TEXT,
+    IN p_able_to_walk BOOLEAN,
+    IN p_explain_able_to_walk TEXT,
+    IN p_communicate_their_needs BOOLEAN,
+    IN p_explain_communicate_their_needs TEXT,
+    IN p_any_medication BOOLEAN,
+    IN p_explain_for_any_medication TEXT,
+    IN p_special_equipment BOOLEAN,
+    IN p_explain_special_equipment TEXT,
+    IN p_significant_periods BOOLEAN,
+    IN p_explain_significant_periods TEXT,
+    IN p_accommodations BOOLEAN,
+    IN p_explain_for_accommodations TEXT,
+    IN p_additional_information TEXT,
+    IN p_child_info_is_correct BOOLEAN,
+    IN p_child_pick_up_password VARCHAR(100),
+    IN p_pick_up_password_form BOOLEAN,
+    IN p_photo_video_permission_form TEXT,
+    IN p_photo_permission_electronic BOOLEAN,
+    IN p_photo_permission_post BOOLEAN,
+    IN p_security_release_policy_form BOOLEAN,
+    IN p_med_technicians_med_transportation_waiver TEXT,
+    IN p_medical_transportation_waiver BOOLEAN,
+    IN p_health_policies BOOLEAN,
+    IN p_parent_sign_outside_waiver BOOLEAN,
+    IN p_approve_social_media_post BOOLEAN,
+    IN p_printed_social_media_post VARCHAR(100),
+    IN p_social_media_post BOOLEAN,
+    IN p_parent_sign VARCHAR(100),
+    IN p_admin_sign VARCHAR(100)
 )
 BEGIN
     INSERT INTO admission_form (
-        child_first_name,
-        child_last_name,
-        nick_name,
-        dob,
-        primary_language,
-        school_age_child_school,
-        custody_papers_apply,
-        gender
+        child_id, additional_parent_id, care_provider_id, dentist_id, nick_name, primary_language, school_age_child_school, 
+        custody_papers_apply, gender, special_diabilities, allergies_reaction, additional_info, medication, health_insurance, 
+        policy_number, emergency_medical_care, first_aid_procedures, above_info_is_correct, physical_exam_last_date, 
+        dental_exam_last_date, allergies, asthma, bleeding_problems, diabetes, epilepsy, frequent_ear_infections, 
+        frequent_illnesses, hearing_problems, high_fevers, hospitalization, rheumatic_fever, seizures_convulsions, 
+        serious_injuries_accidents, surgeries, vision_problems, medical_other, illness_in_pregnancy, condition_of_newborn, 
+        duration_of_pregnancy, birth_weight_lbs, birth_weight_oz, complications, bottle_fed, breast_fed, other_siblings_name, 
+        other_siblings_age, fam_hist_allergies, fam_hist_heart_problems, fam_hist_tuberculosis, fam_hist_asthma, 
+        fam_hist_high_blood_pressure, fam_hist_vision_problems, fam_hist_diabetes, fam_hist_hyperactivity, fam_hist_epilepsy, 
+        fam_hist_no_illness, age_group_friends, neighborhood_friends, relationship_with_mom, relationship_with_dad, 
+        relationship_with_sib, relationship_extended_family, fears_conflicts, c_response_frustration, favorite_activities, 
+        last_five_years_moved, things_used_home, hours_of_television_daily, language_at_home, changes_home_situation, 
+        educational_expectations_of_child, fam_his_instructions, immunization_instructions, important_fam_members, 
+        fam_celebrations, childcare_before, reason_for_childcare_before, what_child_interests, drop_off_time, pick_up_time, 
+        restricted_diet, restricted_diet_reason, eat_own, eat_own_reason, favorite_foods, rest_middle_day, 
+        reason_rest_middle_day, rest_routine, toilet_trained, reason_for_toilet_trained, existing_illness_allergy, 
+        explain_illness_allergy, functioning_at_age, explain_functioning_at_age, able_to_walk, explain_able_to_walk, 
+        communicate_their_needs, explain_communicate_their_needs, any_medication, explain_for_any_medication, 
+        special_equipment, explain_special_equipment, significant_periods, explain_significant_periods, accommodations, 
+        explain_for_accommodations, additional_information, child_info_is_correct, child_pick_up_password, pick_up_password_form, 
+        photo_video_permission_form, photo_permission_electronic, photo_permission_post, security_release_policy_form, 
+        med_technicians_med_transportation_waiver, medical_transportation_waiver, health_policies, parent_sign_outside_waiver, 
+        approve_social_media_post, printed_social_media_post, social_media_post, parent_sign, admin_sign
     ) VALUES (
-        p_child_first_name,
-        p_child_last_name,
-        p_nick_name,
-        p_dob,
-        p_primary_language,
-        p_school_age_child_school,
-        p_custody_papers_apply,
-        p_gender
+        p_child_id, p_additional_parent_id, p_care_provider_id, p_dentist_id, p_nick_name, p_primary_language, 
+        p_school_age_child_school, p_custody_papers_apply, p_gender, p_special_diabilities, p_allergies_reaction, 
+        p_additional_info, p_medication, p_health_insurance, p_policy_number, p_emergency_medical_care, p_first_aid_procedures, 
+        p_above_info_is_correct, p_physical_exam_last_date, p_dental_exam_last_date, p_allergies, p_asthma, 
+        p_bleeding_problems, p_diabetes, p_epilepsy, p_frequent_ear_infections, p_frequent_illnesses, p_hearing_problems, 
+        p_high_fevers, p_hospitalization, p_rheumatic_fever, p_seizures_convulsions, p_serious_injuries_accidents, p_surgeries, 
+        p_vision_problems, p_medical_other, p_illness_in_pregnancy, p_condition_of_newborn, p_duration_of_pregnancy, 
+        p_birth_weight_lbs, p_birth_weight_oz, p_complications, p_bottle_fed, p_breast_fed, p_other_siblings_name, 
+        p_other_siblings_age, p_fam_hist_allergies, p_fam_hist_heart_problems, p_fam_hist_tuberculosis, p_fam_hist_asthma, 
+        p_fam_hist_high_blood_pressure, p_fam_hist_vision_problems, p_fam_hist_diabetes, p_fam_hist_hyperactivity, p_fam_hist_epilepsy, 
+        p_fam_hist_no_illness, p_age_group_friends, p_neighborhood_friends, p_relationship_with_mom, p_relationship_with_dad, 
+        p_relationship_with_sib, p_relationship_extended_family, p_fears_conflicts, p_c_response_frustration, p_favorite_activities, 
+        p_last_five_years_moved, p_things_used_home, p_hours_of_television_daily, p_language_at_home, p_changes_home_situation, 
+        p_educational_expectations_of_child, p_fam_his_instructions, p_immunization_instructions, p_important_fam_members, 
+        p_fam_celebrations, p_childcare_before, p_reason_for_childcare_before, p_what_child_interests, p_drop_off_time, 
+        p_pick_up_time, p_restricted_diet, p_restricted_diet_reason, p_eat_own, p_eat_own_reason, p_favorite_foods, 
+        p_rest_middle_day, p_reason_rest_middle_day, p_rest_routine, p_toilet_trained, p_reason_for_toilet_trained, 
+        p_existing_illness_allergy, p_explain_illness_allergy, p_functioning_at_age, p_explain_functioning_at_age, p_able_to_walk, 
+        p_explain_able_to_walk, p_communicate_their_needs, p_explain_communicate_their_needs, p_any_medication, 
+        p_explain_for_any_medication, p_special_equipment, p_explain_special_equipment, p_significant_periods, 
+        p_explain_significant_periods, p_accommodations, p_explain_for_accommodations, p_additional_information, 
+        p_child_info_is_correct, p_child_pick_up_password, p_pick_up_password_form, p_photo_video_permission_form, 
+        p_photo_permission_electronic, p_photo_permission_post, p_security_release_policy_form, 
+        p_med_technicians_med_transportation_waiver, p_medical_transportation_waiver, p_health_policies, p_parent_sign_outside_waiver, 
+        p_approve_social_media_post, p_printed_social_media_post, p_social_media_post, p_parent_sign, p_admin_sign
     );
 END //
 
 DELIMITER ;
+
 
 
 ------------------ GET -------------------
@@ -1157,15 +1355,15 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetAdmissionForm(
-    IN p_childId INT
+    IN p_child_id INT
 )
 BEGIN
-    SELECT * 
-    FROM admission_form 
-    WHERE child_id = p_childId AND is_active = TRUE;
+    SELECT * FROM admission_form
+    WHERE child_id = p_child_id AND is_active = TRUE;
 END //
 
 DELIMITER ;
+
 
 
 ------------------ GET ALL ---------------
@@ -1189,15 +1387,10 @@ DELIMITER //
 
 CREATE PROCEDURE spUpdateAdmissionForm(
     IN p_child_id INT,
-    IN p_parent_id INT,
-    IN p_additional_parent_id INT,
-    IN p_classId INT,
+    IN p_additional_parent_id VARCHAR(255),
     IN p_care_provider_id INT,
     IN p_dentist_id INT,
-    IN p_child_first_name VARCHAR(255),
-    IN p_child_last_name VARCHAR(255),
     IN p_nick_name VARCHAR(255),
-    IN p_dob DATE,
     IN p_primary_language VARCHAR(100),
     IN p_school_age_child_school VARCHAR(255),
     IN p_custody_papers_apply BOOLEAN,
@@ -1271,8 +1464,8 @@ CREATE PROCEDURE spUpdateAdmissionForm(
     IN p_childcare_before BOOLEAN,
     IN p_reason_for_childcare_before VARCHAR(255),
     IN p_what_child_interests VARCHAR(255),
-    IN p_drop_off_time TIME,
-    IN p_pick_up_time TIME,
+    IN p_drop_off_time VARCHAR(100),
+    IN p_pick_up_time VARCHAR(100),
     IN p_restricted_diet BOOLEAN,
     IN p_restricted_diet_reason VARCHAR(255),
     IN p_eat_own BOOLEAN,
@@ -1320,15 +1513,10 @@ CREATE PROCEDURE spUpdateAdmissionForm(
 BEGIN
     UPDATE admission_form
     SET 
-        parent_id = p_parent_id,
         additional_parent_id = p_additional_parent_id,
-        classId = p_classId,
         care_provider_id = p_care_provider_id,
         dentist_id = p_dentist_id,
-        child_first_name = p_child_first_name,
-        child_last_name = p_child_last_name,
         nick_name = p_nick_name,
-        dob = p_dob,
         primary_language = p_primary_language,
         school_age_child_school = p_school_age_child_school,
         custody_papers_apply = p_custody_papers_apply,
@@ -1468,6 +1656,10 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+
+
 
 
 
@@ -2200,7 +2392,7 @@ CREATE TABLE emergency_contact (
     is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (emergency_id, child_id),
     FOREIGN KEY (emergency_id) REFERENCES emergency_details(emergency_id),
-    FOREIGN KEY (child_id) REFERENCES admission_form(child_id)
+    FOREIGN KEY (child_id) REFERENCES child_info(child_id)
 );
 
 
@@ -2293,6 +2485,253 @@ END //
 DELIMITER ;
 
 
+CREATE TABLE class_form_repository (
+    class_id INT,
+    form_id INT,
+    is_active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (form_id, class_id),
+    FOREIGN KEY (form_id) REFERENCES all_form_info(form_id),
+    FOREIGN KEY (class_id) REFERENCES class_details(class_id)
+);
+
+
+
+-------------------- STORED PROCEDURE-------------------------
+
+-- ------------------CREATE---------------- 
+
+
+DELIMITER //
+
+CREATE PROCEDURE spCreateClassFormRepository( 
+    IN p_classId INT,
+    IN p_formId INT
+)
+BEGIN
+    INSERT INTO class_form_repository (class_id, form_id, is_active)
+    VALUES (p_classId, p_formId, TRUE);
+END //
+
+DELIMITER ;
+
+
+
+
+-- ------------- GET -----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetClassFormRepository(
+    IN p_classId INT,
+    IN p_formId INT
+)
+BEGIN
+    SELECT * FROM class_form_repository
+    WHERE 
+        class_id = p_classId 
+        AND form_id = p_formId
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- GET ALL ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllClassFormRepository()
+BEGIN
+    SELECT * FROM class_form_repository
+    WHERE 
+        is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+ 
+
+-- ------------- UPDATE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateClassFormRepository(
+    IN p_oldClassId INT,
+    IN p_oldFormId INT,
+    IN p_newClassId INT,
+    IN p_newFormId INT
+)
+BEGIN
+    UPDATE class_form_repository
+    SET 
+        class_id = p_newClassId,
+        form_id = p_newFormId
+    WHERE 
+        class_id = p_oldClassId 
+        AND form_id = p_oldFormId
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+-- ------------- DELETE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteClassFormRepository(
+    IN p_classId INT,
+    IN p_formId INT
+)
+BEGIN
+    UPDATE class_form_repository
+    SET is_active = FALSE
+    WHERE 
+        class_id = p_classId 
+        AND form_id = p_formId;
+END //
+
+DELIMITER ;
+
+
+
+
+
+CREATE TABLE student_form_repository (
+    child_id INT,
+    form_id INT,
+    is_active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (child_id, form_id),
+    FOREIGN KEY (child_id) REFERENCES child_info(child_id),
+    FOREIGN KEY (form_id) REFERENCES all_form_info(form_id)
+);
+
+
+
+-------------------- STORED PROCEDURE-------------------------
+
+-- ------------------CREATE---------------- 
+
+
+DELIMITER //
+
+CREATE PROCEDURE spCreateStudentFormRepository(
+    IN p_childId INT,
+    IN p_formId INT
+)
+BEGIN
+    INSERT INTO student_form_repository (child_id, form_id, is_active)
+    VALUES (p_childId, p_formId, TRUE);
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- GET -----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetStudentFormRepository(
+    IN p_childId INT,
+    IN p_formId INT
+)
+BEGIN
+    SELECT * FROM student_form_repository
+    WHERE 
+        child_id = p_childId 
+        AND form_id = p_formId 
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+
+
+-- ------------- GET ALL ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllStudentFormRepository()
+BEGIN
+    SELECT * FROM student_form_repository
+    WHERE is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+ 
+
+-- ------------- UPDATE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateStudentFormRepository(
+    IN p_oldChildId INT,
+    IN p_oldFormId INT,
+    IN p_newChildId INT,
+    IN p_newFormId INT
+)
+BEGIN
+    UPDATE student_form_repository
+    SET 
+        child_id = p_newChildId,
+        form_id = p_newFormId
+    WHERE 
+        child_id = p_oldChildId 
+        AND form_id = p_oldFormId 
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- DELETE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteStudentFormRepository(
+    IN p_childId INT,
+    IN p_formId INT
+)
+BEGIN
+    UPDATE student_form_repository
+    SET is_active = FALSE
+    WHERE 
+        child_id = p_childId 
+        AND form_id = p_formId;
+END //
+
+DELIMITER ;
+
+
+
+
+
 
 
 -- Additional Sql
@@ -2301,23 +2740,11 @@ DELIMITER //
 
 CREATE PROCEDURE `spGetAllParentInviteEmails`()
 BEGIN
-    SELECT email AS parent_email FROM parent_invite_info
-    WHERE is_active = TRUE;
+    SELECT invite_email AS parent_email FROM parent_invite_info;
 END //
 
 DELIMITER ;
 
-DELIMITER //
-
-CREATE PROCEDURE `spGetParentInviteStatus`(
-    IN p_email VARCHAR(255)
-)
-BEGIN
-    SELECT invite_status AS message FROM parent_invite_info
-    WHERE email = p_email AND is_active = TRUE;
-END //
-
-DELIMITER ;
 
 DELIMITER //
 
@@ -2386,42 +2813,42 @@ END //
 
 DELIMITER ;
 
-DELIMITER //
+-- DELIMITER //
 
-CREATE PROCEDURE `spGetAllSignUpInfo`()
-BEGIN
-    SELECT email_id,
-    invite_id,
-    password,
-    CASE 
-        WHEN admin = 0 THEN false
-        ELSE true
-    END AS admin,
-    CASE 
-        WHEN temp_password = 0 THEN false
-        ELSE true
-    END AS temp_password
-    
-    FROM signup_info
-    
-    WHERE is_active = TRUE;
-END //
+-- CREATE PROCEDURE `spGetAllSignUpInfo`()
+-- BEGIN
+--     SELECT email_id,
+--     invite_id,
+--     password,
+--     CASE 
+--         WHEN admin = 0 THEN false
+--         ELSE true
+--     END AS admin,
+--     CASE 
+--         WHEN temp_password = 0 THEN false
+--         ELSE true
+--     END AS temp_password
+--     
+--     FROM signup_info
+--     
+--     WHERE is_active = TRUE;
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
 
-DELIMITER //
+-- DELIMITER //
 
-CREATE PROCEDURE `spGetIsAdminEmail`(
-	IN p_email_id VARCHAR(255)
-)
-BEGIN
-    SELECT admin
-    FROM signup_info
-    WHERE is_active = TRUE AND email_id = p_email_id;
-END //
+-- CREATE PROCEDURE `spGetIsAdminEmail`(
+-- 	IN p_email_id VARCHAR(255)
+-- )
+-- BEGIN
+--     SELECT admin
+--     FROM signup_info
+--     WHERE is_active = TRUE AND email_id = p_email_id;
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
 
 
@@ -2565,27 +2992,27 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE `spGetParentBasedChildList`(
-    IN p_email VARCHAR(255)
-)
-BEGIN
-	SELECT 
-        af.child_id, 
-        af.child_first_name, 
-        af.child_last_name, 
-        pi.name AS parent_name
-    FROM 
-        admission_form af
-    INNER JOIN 
-        parent_info pi 
-    ON 
-        af.parent_id = pi.id
-    WHERE 
-        pi.email = p_email 
-        AND pi.is_active = TRUE;
-END //
+-- CREATE PROCEDURE `spGetParentBasedChildList`(
+--     IN p_email VARCHAR(255)
+-- )
+-- BEGIN
+-- 	SELECT 
+--         af.child_id, 
+--         af.child_first_name, 
+--         af.child_last_name, 
+--         pi.name AS parent_name
+--     FROM 
+--         admission_form af
+--     INNER JOIN 
+--         parent_info pi 
+--     ON 
+--         af.parent_id = pi.id
+--     WHERE 
+--         pi.email = p_email 
+--         AND pi.is_active = TRUE;
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
 
 DELIMITER //
@@ -2681,20 +3108,13 @@ END //
 DELIMITER ;
 
 
-
-
-
-
-
-
-
-CREATE TABLE class_form_repository (
-    class_id INT,
-    form_id INT,
-    is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (form_id, class_id),
-    FOREIGN KEY (form_id) REFERENCES all_form_info(form_id),
-    FOREIGN KEY (class_id) REFERENCES class_details(class_id)
+CREATE TABLE parent_invite_info (
+    invite_email VARCHAR(255) NOT NULL,
+    parent_id INT,
+    invite_id VARCHAR(255),
+    time_stamp VARCHAR(255),
+    PRIMARY KEY (invite_email),
+    FOREIGN KEY(parent_id) REFERENCES parent_info(parent_id)
 );
 
 
@@ -2706,342 +3126,161 @@ CREATE TABLE class_form_repository (
 
 DELIMITER //
 
-CREATE PROCEDURE spCreateClassFormRepository( 
-    IN p_classId INT,
-    IN p_formId INT
-)
+CREATE PROCEDURE spCreateParentInvite(
+    IN p_email VARCHAR(255),
+    IN p_invite_id VARCHAR(255),
+    IN p_parent_id INT,
+    IN p_time_stamp VARCHAR(255)
+    )
 BEGIN
-    INSERT INTO class_form_repository (class_id, form_id, is_active)
-    VALUES (p_classId, p_formId, TRUE);
-END //
-
-DELIMITER ;
-
-
-
-
--- ------------- GET -----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spGetClassFormRepository(
-    IN p_classId INT,
-    IN p_formId INT
-)
-BEGIN
-    SELECT * FROM class_form_repository
-    WHERE 
-        class_id = p_classId 
-        AND form_id = p_formId
-        AND is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
-
--- ------------- GET ALL ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spGetAllClassFormRepository()
-BEGIN
-    SELECT * FROM class_form_repository
-    WHERE 
-        is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
- 
-
--- ------------- UPDATE ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spUpdateClassFormRepository(
-    IN p_oldClassId INT,
-    IN p_oldFormId INT,
-    IN p_newClassId INT,
-    IN p_newFormId INT
-)
-BEGIN
-    UPDATE class_form_repository
-    SET 
-        class_id = p_newClassId,
-        form_id = p_newFormId
-    WHERE 
-        class_id = p_oldClassId 
-        AND form_id = p_oldFormId
-        AND is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
--- ------------- DELETE ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spDeleteClassFormRepository(
-    IN p_classId INT,
-    IN p_formId INT
-)
-BEGIN
-    UPDATE class_form_repository
-    SET is_active = FALSE
-    WHERE 
-        class_id = p_classId 
-        AND form_id = p_formId;
-END //
-
-DELIMITER ;
-
-
-
-
-CREATE TABLE student_form_repository (
-    child_id INT,
-    form_id INT,
-    is_active BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY (child_id, form_id),
-    FOREIGN KEY (child_id) REFERENCES admission_form(child_id),
-    FOREIGN KEY (form_id) REFERENCES all_form_info(form_id)
-);
-
-
-
--------------------- STORED PROCEDURE-------------------------
-
--- ------------------CREATE---------------- 
-
-
-DELIMITER //
-
-CREATE PROCEDURE spCreateStudentFormRepository(
-    IN p_childId INT,
-    IN p_formId INT
-)
-BEGIN
-    INSERT INTO student_form_repository (child_id, form_id, is_active)
-    VALUES (p_childId, p_formId, TRUE);
-END //
-
-DELIMITER ;
-
-
-
-
-
--- ------------- GET -----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spGetStudentFormRepository(
-    IN p_childId INT,
-    IN p_formId INT
-)
-BEGIN
-    SELECT * FROM student_form_repository
-    WHERE 
-        child_id = p_childId 
-        AND form_id = p_formId 
-        AND is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
-
-
--- ------------- GET ALL ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spGetAllStudentFormRepository()
-BEGIN
-    SELECT * FROM student_form_repository
-    WHERE is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
- 
-
--- ------------- UPDATE ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spUpdateStudentFormRepository(
-    IN p_oldChildId INT,
-    IN p_oldFormId INT,
-    IN p_newChildId INT,
-    IN p_newFormId INT
-)
-BEGIN
-    UPDATE student_form_repository
-    SET 
-        child_id = p_newChildId,
-        form_id = p_newFormId
-    WHERE 
-        child_id = p_oldChildId 
-        AND form_id = p_oldFormId 
-        AND is_active = TRUE;
-END //
-
-DELIMITER ;
-
-
-
-
-
--- ------------- DELETE ----------------
-
-
-DELIMITER //
-
-CREATE PROCEDURE spDeleteStudentFormRepository(
-    IN p_childId INT,
-    IN p_formId INT
-)
-BEGIN
-    UPDATE student_form_repository
-    SET is_active = FALSE
-    WHERE 
-        child_id = p_childId 
-        AND form_id = p_formId;
-END //
-
-DELIMITER ;
-
-
-
-
-DELIMITER //
-
-CREATE PROCEDURE `spAllStatusBasedOnForm`(
-    IN p_form_name VARCHAR(255)
-)
-BEGIN
-    -- Declare a variable to hold the dynamic SQL query
-    SET @sql_query = CONCAT(
-        'SELECT 
-            af.child_id,
-            CONCAT(adform.child_first_name, " ", adform.child_last_name) AS child_name,
-            
-            CASE 
-                WHEN af.admin_sign IS NULL AND af.parent_sign IS NULL THEN "Incomplete"
-                WHEN af.admin_sign IS NULL THEN "Approval Pending"
-                ELSE "Completed"
-            END AS form_status,
-            
-            "', p_form_name, '" AS formname,
-            
-            cl.class_name AS class_name,
-            p.email AS parent_email,
-            p2.email AS parent_two_email
-
-        FROM ', p_form_name, ' af  -- Dynamically use the table name here
-        LEFT JOIN admission_form adform ON af.child_id = adform.child_id  
-        LEFT JOIN class_details cl ON adform.classId = cl.class_id  
-        LEFT JOIN parent_info p ON adform.parent_id = p.id 
-        LEFT JOIN parent_info p2 ON adform.additional_parent_id = p2.id 
-
-        WHERE af.is_active = TRUE;'
+    INSERT INTO parent_invite_info (
+        invite_email, 
+        invite_id, 
+        parent_id,
+        time_stamp
+    )
+    VALUES (
+        p_email, 
+        p_invite_id, 
+        p_parent_id,
+        p_time_stamp
     );
-
-    -- Prepare and execute the dynamic SQL query
-    PREPARE stmt FROM @sql_query;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
 END //
 
 DELIMITER ;
 
 
 
+
+
+
+-- ------------- GET -----------------
+
+
 DELIMITER //
 
-CREATE PROCEDURE `spGetAllChildOverAllFormStatus`()
+CREATE PROCEDURE spGetParentInvite(
+    IN p_email VARCHAR(255)
+)
+BEGIN
+    SELECT * FROM parent_invite_info
+    WHERE invite_email = p_email;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetParentIdInInviteTable(
+    IN p_invite_id VARCHAR(255)
+)
+BEGIN
+    SELECT * FROM parent_invite_info
+    WHERE invite_id = p_invite_id;
+END //
+
+DELIMITER ;
+
+
+
+-- ------------- GET ALL ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetAllParentInvites()
+BEGIN
+    SELECT * FROM parent_invite_info;
+END //
+
+DELIMITER ;
+
+
+
+
+ 
+
+-- ------------- UPDATE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spUpdateParentInvite(
+    IN p_email VARCHAR(255),
+    IN p_invite_id VARCHAR(255),
+    IN p_parent_id INT,
+    IN p_time_stamp VARCHAR(255)
+)
+BEGIN
+    UPDATE parent_invite_info
+    SET 
+        invite_id = p_invite_id,
+        parent_id = p_parent_id,
+        time_stamp = p_time_stamp
+    WHERE 
+        invite_email = p_email;
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- ------------- DELETE ----------------
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteParentInvite(
+    IN p_email VARCHAR(255)
+)
+BEGIN
+    DELETE FROM parent_invite_info
+    WHERE invite_email = p_email;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetInviteStatus()
 BEGIN
     SELECT 
-        af.child_id,
-        CONCAT(af.child_first_name, " " , af.child_last_name) AS child_name,
-        cl.class_name,
-        p.email AS parent_email,
-        p2.email AS parent_two_email,
+        pi.invite_email,
+        pi.time_stamp,
+        p.parent_name,
         CASE 
-            WHEN EXISTS (
-                SELECT 1
-                FROM (
-                    SELECT admin_sign, parent_sign 
-                    FROM admission_form 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                    UNION ALL
-                    SELECT admin_sign, parent_sign 
-                    FROM authorization_form 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                    UNION ALL
-                    SELECT admin_sign, parent_sign 
-                    FROM enrollment_form 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                    UNION ALL
-                    SELECT admin_sign, parent_sign 
-                    FROM parent_handbook 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                ) AS form_statuses
-                WHERE admin_sign IS NULL AND parent_sign IS NULL
-            ) THEN 'Incomplete'
-            
-            WHEN EXISTS (
-                SELECT 1
-                FROM (
-                    SELECT admin_sign, parent_sign 
-                    FROM admission_form 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                    UNION ALL
-                    SELECT admin_sign, parent_sign 
-                    FROM authorization_form 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                    UNION ALL
-                    SELECT admin_sign, parent_sign 
-                    FROM enrollment_form 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                    UNION ALL
-                    SELECT admin_sign, parent_sign 
-                    FROM parent_handbook 
-                    WHERE child_id = af.child_id AND is_active = TRUE
-                ) AS form_statuses
-                WHERE admin_sign IS NULL AND parent_sign IS NOT NULL
-            ) THEN 'Approval Pending'
-            
-            ELSE 'Completed'
-        END AS final_form_status
+            WHEN p.email IS NOT NULL THEN 'Active'
+            ELSE 'Inactive'
+        END AS status
     FROM 
-        admission_form af
-        LEFT JOIN class_details cl ON af.classId = cl.class_id  
-        LEFT JOIN parent_info p ON af.parent_id = p.id 
-        LEFT JOIN parent_info p2 ON af.additional_parent_id = p2.id 
-    WHERE 
-        af.is_active = TRUE
-    GROUP BY 
-        af.child_id;
+        parent_invite_info pi
+    LEFT JOIN 
+        parent_info p ON pi.parent_id = p.parent_id;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetParentInviteStatus(
+	IN p_invite_email VARCHAR(255)
+)
+BEGIN
+    SELECT
+        CASE 
+            WHEN p.email IS NOT NULL THEN 'Active'
+            ELSE 'Inactive'
+        END AS status
+    FROM 
+        parent_invite_info pi
+    LEFT JOIN 
+        parent_info p ON pi.parent_id = p.parent_id
+	WHERE invite_email = p_invite_email;
 END //
 
 DELIMITER ;

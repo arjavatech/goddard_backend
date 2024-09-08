@@ -1,4 +1,5 @@
 from datetime import date, time
+from datetime import datetime
 import json
 from fastapi import APIRouter, Body, FastAPI, HTTPException, Path
 from fastapi.responses import JSONResponse
@@ -25,7 +26,7 @@ def connect_to_database():
             port=3306,
             user="admin",
             password="1204Mani",
-            database="goddardtest",
+            database="goddardtestdb",
             cursorclass=pymysql.cursors.DictCursor
         )
         return connection
@@ -37,131 +38,128 @@ def connect_to_database():
 def get_test():
     return {"response": "Test get call successfully called"}
 
-# SignUpInfo Schema
-class SignUpInfo(BaseModel):
-    email_id: str
-    invite_id: str = None
-    password: str = None
-    admin: bool = False
-    temp_password: bool = False
+# AdminInfo Schema
 
-# --------- SignUpInfo Endpoints ---------
+class AdminInfo(BaseModel):
+    email: str
+    password: Optional[str] = None
+    designation: Optional[str] = None
+    apporved_by: Optional[str] = None
+    is_active: Optional[bool] = None
 
-@app.post("/signup_info/create")
-async def create_signup_info(signup_info: SignUpInfo = Body(...)):
+# --------- Admin Info Endpoints ---------
+
+@app.post("/admin_info/create")
+async def create_admin_info(admin_info: AdminInfo = Body(...)):
     connection = connect_to_database()
     if not connection:
         return {"error": "Failed to connect to database"}
 
     try:
         with connection.cursor() as cursor:
-            uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
-            sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
-            cursor.execute(sql, (signup_info.email_id, invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
-            connection.commit()
-            sql2 = "CALL spUpdateParentInviteAsInActive(%s)"
-            cursor.execute(sql2, signup_info.email_id,)
+            sql = "CALL spCreateAdminInfo(%s, %s, %s, %s);"
+            cursor.execute(sql, (admin_info.email, admin_info.password, admin_info.designation, admin_info.apporved_by))
             connection.commit()
 
-            return {"message": "SignUpInfo created successfully"}
+            return {"message": "AdminInfo created successfully"}
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        raise HTTPException(status_code=500, detail={"message": "AdminInfo creation Failed!!!"})
     finally:
         if connection:
             connection.close()
 
-@app.get("/signup_info/get/{email_id}")
-async def get_signup_info(email_id: str):
+@app.get("/admin_info/get/{email_id}")
+async def get_admin_info(email_id: str):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spGetSignUpInfo(%s);"
+            sql = "CALL spGetAdminInfo(%s);"
             cursor.execute(sql, (email_id,))
             result = cursor.fetchone()
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"SignUpInfo with email_id {email_id} not found")
+                raise HTTPException(status_code=404, detail=f"Admin Info with email_id {email_id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching signup_info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        raise HTTPException(status_code=500, detail={"error": "Admin Info get call failed (DB Error)"})
     finally:
         if connection:
             connection.close()
 
-@app.get("/signup_info/getall")
-async def get_all_signup_info():
+@app.get("/admin_info/getall")
+async def get_all_admin_info():
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spGetAllSignUpInfo();"
+            sql = "CALL spGetAllAdminInfo();"
             cursor.execute(sql)
             result = cursor.fetchall()
             return result
     except pymysql.MySQLError as err:
         print(f"Error fetching signup_info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        raise HTTPException(status_code=500, detail={"error": "Admin Info get_all call failed (DB Error)"})
     finally:
         if connection:
             connection.close()
 
-@app.put("/signup_info/update/{email_id}")
-async def update_signup_info(email_id: str, signup_info: SignUpInfo = Body(...)):
+@app.put("/admin_info/update/{email_id}")
+async def update_admin_info(email_id: str, admin_info: AdminInfo = Body(...)):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spUpdateSignUpInfo(%s, %s, %s, %s, %s);"
-            cursor.execute(sql, (email_id, signup_info.invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
+            sql = "CALL spUpdateAdminInfo(%s, %s, %s, %s);"
+            cursor.execute(sql, (email_id, admin_info.password, admin_info.designation, admin_info.apporved_by))
             connection.commit()
 
-            return {"message": f"SignUpInfo with email_id {email_id} updated successfully"}
+            return {"message": f"Admin Info with email_id {email_id} updated successfully"}
     except pymysql.MySQLError as err:
         print(f"Error updating signup_info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        raise HTTPException(status_code=500, detail={"error": f"Admin Info with email_id {email_id} update call failed (DB Error)"})
     finally:
         if connection:
             connection.close()
 
-@app.put("/signup_info/delete/{email_id}")
-async def delete_signup_info(email_id: str):
+@app.put("/admin_info/delete/{email_id}")
+async def delete_admin_info(email_id: str):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spDeleteSignUpInfo(%s);"
+            sql = "CALL spDeleteAdminInfo(%s);"
             cursor.execute(sql, (email_id,))
             connection.commit()
 
             return {"message": f"SignUpInfo with email_id {email_id} deleted successfully (soft delete)"}
     except pymysql.MySQLError as err:
         print(f"Error deleting signup_info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        raise HTTPException(status_code=500, detail={"error": f"Admin Info with email_id {email_id} delete call failed (DB Error)"})
     finally:
         if connection:
             connection.close()
 
 
+
+
 # ParentInvite Schema
 class ParentInvite(BaseModel):
-    email: str
+    invite_email: str
+    parent_id: int
     invite_id: str = None
-    parent_name: str = None
-    child_full_name: str = None
-    invite_status: str = None
-    signed_up_email: str = None
+    time_stamp: str = None
+
 
 # --------- ParentInvite Endpoints ---------
 
@@ -173,42 +171,15 @@ async def create_parent_invite(invite: ParentInvite = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            # Get the current UTC time
+            current_utc_time = datetime.utcnow()
             uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
-            sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (invite.email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
+            sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
+            cursor.execute(sql, (invite.invite_email, invite_id, invite.parent_id, current_utc_time))
             connection.commit()
-            sender = 'noreply.goddard@gmail.com'
-            app_password = 'ynir rnbf owdn mapx'
 
-
-            subject = "Invitation to Create an Account for The Goddard school Admission"
-
-
-            html_content = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
-                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <p>Dear {invite.parent_name},</p>
-                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
-                    <p style="text-align: center;">
-                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
-                    </p>
-                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
-                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
-
-                </div>
-            </body>
-            </html>
-            """
-
-            # Initialize Yagmail with the sender's Gmail credentials
-            yag = yagmail.SMTP(user=sender, password=app_password)
-
-            # Sending the email with HTML table in the body and Excel attachment
-            yag.send(to=invite.email, subject=subject, contents=html_content)
-
-            return {"message": "Parent invite created and Email sent successfully!"}
+            return {"message": "Parent invite successfully created !"}
 
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
@@ -258,146 +229,23 @@ async def get_all_parent_invites():
         if connection:
             connection.close()
 
-@app.get("/parent_invite_info/all")
-async def get_parent_invites():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllParentInvites();"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching parent invites: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/parent_invite_info/all_parent_email")
-async def get_parent_invite_emails():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllParentInviteEmails()"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching parent invites: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/parent_invite_info/invite_status/{email}")
-async def get_parent_invite_status(email: str):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetParentInviteStatus(%s)"
-            cursor.execute(sql, email)
-            result = cursor.fetchone()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching parent invites: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/parent_invite_info/accepted_invite")
-async def get_parent_accepted_invite_emails():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllParentAcceptedInviteEmails()"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching parent invites: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/parent_invite_info/not_accepted_invite")
-async def get_parent_not_accepted_invite_emails():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllParentNotAcceptedInviteEmails()"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching parent invites: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
 @app.put("/parent_invite_info/update/{email}")
-async def update_parent_invite(email: str, invite: ParentInvite = Body(...)):
+async def update_parent_invite(email: str, parent_name: str, child_full_name: str,  invite: ParentInvite = Body(...)):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
+            # Get the current UTC time
+            current_utc_time = datetime.utcnow()
             uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
-            sql = "CALL spUpdateParentInvite(%s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
+            sql = "CALL spUpdateParentInvite(%s, %s, %s, %s);"
+            cursor.execute(sql, (email, invite_id, invite.parent_id, current_utc_time))
             connection.commit()
 
-            sender = 'noreply.goddard@gmail.com'
-            app_password = 'ynir rnbf owdn mapx'
-
-
-            subject = "Invitation to Create an Account for The Goddard school Admission"
-
-
-            html_content = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
-                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <p>Dear {invite.parent_name},</p>
-                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
-                    <p style="text-align: center;">
-                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
-                    </p>
-                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
-                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
-
-                </div>
-            </body>
-            </html>
-            """
-
-            # Initialize Yagmail with the sender's Gmail credentials
-            yag = yagmail.SMTP(user=sender, password=app_password)
-
-            # Sending the email with HTML table in the body and Excel attachment
-            yag.send(to=invite.email, subject=subject, contents=html_content)
-
-            return {"message": f"Parent invite with email {email} updated successfully and Email sent successfully!"}
+            return {"message": f"Parent invite with email {email} updated successfully!"}
 
     except pymysql.MySQLError as err:
         print(f"Error updating parent invite: {err}")
@@ -425,6 +273,184 @@ async def delete_parent_invite(email: str):
     finally:
         if connection:
             connection.close()
+
+
+
+# ChildInfo Schema
+class ChildInfo(BaseModel):
+    parent_id: str
+    class_id: int
+    child_first_name: str
+    child_last_name: str
+    dob: Optional[str] = None  # Date as string in 'YYYY-MM-DD' format
+
+# --------- ChildInfo Endpoints ---------
+
+app.post("/child_info/create")  
+async def create_child_info(childinfo: ChildInfo = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            child_id = None
+            sql = """
+            CALL spCreateChildInfo(%s, %s, %s, %s, %s, @child_id);
+            """
+            cursor.execute(sql, (
+                childinfo.parent_id, 
+                childinfo.class_id, 
+                childinfo.child_first_name, 
+                childinfo.child_last_name, 
+                childinfo.dob
+            ))
+            
+            # Retrieve the child_id from the output variable
+            cursor.execute("SELECT @child_id AS child_id;")
+            result = cursor.fetchone()
+            child_id = result['child_id']
+            connection.commit()
+
+            # # Insert into other forms using the child_id
+            # insert_into_other_forms(child_id)
+
+            return {"message": "Child information created successfully", "child_id": child_id}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+def insert_into_other_forms(child_id):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            # Example: Insert into admission_form
+            sql = "INSERT INTO admission_form (child_id) VALUES (%s);"
+            cursor.execute(sql, (child_id,))
+            
+            sql = "INSERT INTO authorization_form (child_id) VALUES (%s);"
+            cursor.execute(sql, (child_id,))
+            
+            sql = "INSERT INTO enrollment_form (child_id) VALUES (%s);"
+            cursor.execute(sql, (child_id,))
+            
+            sql = "INSERT INTO parent_handbook (child_id) VALUES (%s);"
+            cursor.execute(sql, (child_id,))
+     
+            connection.commit()
+    except pymysql.MySQLError as err:
+        print(f"Error inserting into other forms: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.get("/child_info/get/{child_id}")  
+async def get_child_info(child_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetChildInfo(%s);"
+            cursor.execute(sql, (child_id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Child information with id {child_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching child information: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/child_info/getall")  
+async def get_all_child_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllChildInfo();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching all child information: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/child_info/update/{child_id}")  
+async def update_child_info(child_id: int, childinfo: ChildInfo = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            CALL spUpdateChildInfo(%s, %s, %s, %s, %s, %s);
+            """
+            cursor.execute(sql, (
+                child_id, 
+                childinfo.parent_id, 
+                childinfo.class_id, 
+                childinfo.child_first_name, 
+                childinfo.child_last_name, 
+                childinfo.dob
+            ))
+            connection.commit()
+
+            return {"message": f"Child information with id {child_id} updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating child information: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/child_info/delete/{child_id}")  
+async def delete_child_info(child_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteChildInfo(%s);"
+            cursor.execute(sql, (child_id,))
+            connection.commit()
+            
+            return {"message": f"Child information with id {child_id} deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting child information: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+
+# ParentInvite Schema
+class ParentInviteClass(BaseModel):
+    parent_name: str
+    invite_email: str
+    child_fname: str
+    child_lname: str
+    child_classroom_id: int
 
 
 
@@ -580,46 +606,48 @@ async def delete_form_info(form_id: int):
 
 # ParentInfo Schema
 class ParentInfo(BaseModel):
-    email: str
-    name: str
-    street_address: str
-    city_address: str
-    state_address: str
-    zip_address: str
-    home_telephone_number: str
-    home_cellphone_number: str
-    business_name: str
-    work_hours_from: str
-    work_hours_to: str
-    business_telephone_number: str
-    business_street_address: str
-    business_city_address: str
-    business_state_address: str
-    business_zip_address: str
-    business_cell_number: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+    street_address: Optional[str] = None
+    city_address: Optional[str] = None
+    state_address: Optional[str] = None
+    zip_address: Optional[str] = None
+    home_telephone_number: Optional[str] = None
+    home_cellphone_number: Optional[str] = None
+    business_name: Optional[str] = None
+    work_hours_from: Optional[str] = None
+    work_hours_to: Optional[str] = None
+    business_telephone_number: Optional[str] = None
+    business_street_address: Optional[str] = None
+    business_city_address: Optional[str] = None
+    business_state_address: Optional[str] = None
+    business_zip_address: Optional[str] = None
+    business_cell_number: Optional[str] = None
+    password: Optional[str] = None
 
 # --------- ParentInfo Endpoints ---------
 
 @app.post("/parent_info/create")  
-async def add_parent_info(parentinfo: ParentInfo = Body()):
+async def create_parent_info(parentinfo: ParentInfo = Body()):
     connection = connect_to_database()
     if not connection:
         return {"error": "Failed to connect to database"}
 
     try:
-        with connection.cursor() as cursor:
-            sql = "CALL spCreateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
+         with connection.cursor() as cursor:
+            sql = "CALL spCreateParentInfoWithAllDetails(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (
                 parentinfo.email, parentinfo.name, parentinfo.street_address, parentinfo.city_address,
                 parentinfo.state_address, parentinfo.zip_address, parentinfo.home_telephone_number,
                 parentinfo.home_cellphone_number, parentinfo.business_name, parentinfo.work_hours_from,
                 parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
                 parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
-                parentinfo.business_cell_number
+                parentinfo.business_cell_number, parentinfo.password
             ))
             connection.commit()
 
             return {"message": "Parent info created successfully"}
+         
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -686,14 +714,14 @@ def update_parent_info(id: int, parentinfo: ParentInfo = Body(...)):
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (
                 id, parentinfo.email, parentinfo.name, parentinfo.street_address, parentinfo.city_address,
                 parentinfo.state_address, parentinfo.zip_address, parentinfo.home_telephone_number,
                 parentinfo.home_cellphone_number, parentinfo.business_name, parentinfo.work_hours_from,
                 parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
                 parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
-                parentinfo.business_cell_number
+                parentinfo.business_cell_number, parentinfo.password
             ))
             connection.commit()
 
@@ -964,16 +992,6 @@ async def delete_care_provider(id: int):
         if connection:
             connection.close()
 
-
-
-
-
-
-
-
-
-
-
 # Dentist Schema
 class Dentist(BaseModel):
     name: str
@@ -1103,7 +1121,473 @@ async def delete_dentist(id: int):
 
 
 
+# EmergencyDetail Schema
+class EmergencyDetail(BaseModel):
+    contact_name: str
+    contact_relationship: str
+    street_address: str
+    city_address: str
+    state_address: str
+    zip_address: str
+    contact_telephone_number: str
 
+# --------- EmergencyDetails Endpoints ---------
+
+@app.post("/emergency_details/create")  
+async def create_emergency_detail(emergencydetail: EmergencyDetail = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s);"
+            cursor.execute(sql, (
+                emergencydetail.contact_name,
+                emergencydetail.contact_relationship,
+                emergencydetail.street_address,
+                emergencydetail.city_address,
+                emergencydetail.state_address,
+                emergencydetail.zip_address,
+                emergencydetail.contact_telephone_number
+            ))
+            connection.commit()
+
+            return {"message": "Emergency detail created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/emergency_details/get/{id}")  
+async def get_emergency_detail(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetEmergencyDetail(%s);"
+            cursor.execute(sql, (id,))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Emergency detail with id {id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching emergency detail: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/emergency_details/getall")  
+async def get_all_emergency_details():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllEmergencyDetails();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching emergency details: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/emergency_details/update/{id}")  
+async def update_emergency_detail(id: int, emergencydetail: EmergencyDetail = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s, %s);"
+            cursor.execute(sql, (
+                id,
+                emergencydetail.contact_name,
+                emergencydetail.contact_relationship,
+                emergencydetail.street_address,
+                emergencydetail.city_address,
+                emergencydetail.state_address,
+                emergencydetail.zip_address,
+                emergencydetail.contact_telephone_number
+            ))
+            connection.commit()
+
+            return {"message": f"Emergency detail with id {id} updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating emergency detail: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/emergency_details/delete/{id}")  
+async def delete_emergency_detail(id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteEmergencyDetail(%s);"
+            cursor.execute(sql, (id,))
+            connection.commit()
+
+            return {"message": f"Emergency detail with id {id} deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting emergency detail: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+# EmergencyContact Schema
+class EmergencyContact(BaseModel):
+    emergency_id: int
+    child_id: int
+
+# --------- EmergencyContact Endpoints ---------
+
+@app.post("/emergency_contact/create")
+async def create_emergency_contact(contact: EmergencyContact = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateEmergencyContact(%s, %s);"
+            cursor.execute(sql, (contact.emergency_id, contact.child_id))
+            connection.commit()
+            return {"message": "Emergency contact created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/emergency_contact/get/{emergency_id}/{child_id}")
+async def get_emergency_contact(emergency_id: int, child_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetEmergencyContact(%s, %s);"
+            cursor.execute(sql, (emergency_id, child_id))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail="Emergency contact not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching emergency contact: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/emergency_contact/getall")
+async def get_all_emergency_contacts():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllEmergencyContact();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching all emergency contacts: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/emergency_contact/update/{old_emergency_id}/{old_child_id}")
+async def update_emergency_contact(
+    old_emergency_id: int,
+    old_child_id: int,
+    contact: EmergencyContact = Body(...)
+):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateEmergencyContact(%s, %s, %s, %s);"
+            cursor.execute(sql, (old_emergency_id, old_child_id, contact.emergency_id, contact.child_id))
+            connection.commit()
+            return {"message": "Emergency contact updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating emergency contact: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/emergency_contact/delete/{emergency_id}/{child_id}")
+async def delete_emergency_contact(emergency_id: int, child_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteEmergencyContact(%s, %s);"
+            cursor.execute(sql, (emergency_id, child_id))
+            connection.commit()
+            return {"message": "Emergency contact deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting emergency contact: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+# Schema for StudentFormRepository
+class StudentFormRepository(BaseModel):
+    child_id: int
+    form_id: int
+
+# --------- StudentFormRepository Endpoints ---------
+
+# Create a new entry in student_form_repository
+@app.post("/student_form_repository/create")
+async def create_student_form_repository(entry: StudentFormRepository = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateStudentFormRepository(%s, %s);"
+            cursor.execute(sql, (entry.child_id, entry.form_id))
+            connection.commit()
+            return {"message": "Student-Form link created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+# Get a specific entry from student_form_repository
+@app.get("/student_form_repository/get/{child_id}/{form_id}")
+async def get_student_form_repository(child_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetStudentFormRepository(%s, %s);"
+            cursor.execute(sql, (child_id, form_id))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail="Student-Form link not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching student-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+# Get all active entries from student_form_repository
+@app.get("/student_form_repository/getall")
+async def get_all_student_form_repository():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllStudentFormRepository();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching student-form links: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/student_form_repository/update/{child_id}/{form_id}")
+async def update_student_form_repository(
+    child_id: int,
+    form_id: int,
+    new_entry: StudentFormRepository = Body(...)
+):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+            cursor.execute(sql, (child_id, form_id, new_entry.child_id, new_entry.form_id))
+            connection.commit()
+            return {"message": "Student-Form link updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating student-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+            
+            
+# Soft delete a specific entry in student_form_repository
+@app.put("/student_form_repository/delete/{child_id}/{form_id}")
+async def delete_student_form_repository(child_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteStudentFormRepository(%s, %s);"
+            cursor.execute(sql, (child_id, form_id))
+            connection.commit()
+            return {"message": "Student-Form link deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting student-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+
+# Schema for ClassFormRepository
+class ClassFormRepository(BaseModel):
+    class_id: int
+    form_id: int
+
+# --------- ClassFormRepository Endpoints ---------
+
+@app.post("/class_form_repository/create")  
+async def create_class_form_repository(entry: ClassFormRepository = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spCreateClassFormRepository(%s, %s);"
+            cursor.execute(sql, (entry.class_id, entry.form_id))
+            connection.commit()
+
+            return {"message": "Class-Form link created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/class_form_repository/get/{class_id}/{form_id}")  
+async def get_class_form_repository(class_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetClassFormRepository(%s, %s);"
+            cursor.execute(sql, (class_id, form_id))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Class-Form link not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching class-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/class_form_repository/getall")  
+async def get_all_class_form_repository():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllClassFormRepository();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching class-form links: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/class_form_repository/update/{class_id}/{form_id}")  
+async def update_class_form_repository(
+    class_id: int, form_id: int, 
+    new_entry: ClassFormRepository = Body(...)
+):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateClassFormRepository(%s, %s, %s, %s);"
+            cursor.execute(sql, (class_id, form_id, new_entry.class_id, new_entry.form_id))
+            connection.commit()
+
+            return {"message": "Class-Form link updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating class-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/class_form_repository/delete/{class_id}/{form_id}")  
+async def delete_class_form_repository(class_id: int, form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteClassFormRepository(%s, %s);"
+            cursor.execute(sql, (class_id, form_id))
+            connection.commit()
+
+            return {"message": "Class-Form link deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error deleting class-form link: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
 
 
 # AdmissionForm Schema
@@ -1118,18 +1602,13 @@ class AdmissionFormCreate(BaseModel):
     gender: Optional[str] = None
 
 
-
-class AdmissionFormUpdate(BaseModel):
-    child_id: Optional[int] = None
-    parent_id: Optional[int] = None
+# AdmissionForm Schema
+class AdmissionForm(BaseModel):
+    child_id: int
     additional_parent_id: Optional[int] = None
-    classId: Optional[int] = None
-    care_provider_id: Optional[int] = None
-    dentist_id: Optional[int] = None
-    child_first_name: Optional[str] = None
-    child_last_name: Optional[str] = None
+    care_provider_id:  Optional[int]  = None
+    dentist_id:  Optional[int]  = None
     nick_name: Optional[str] = None
-    dob: Optional[str] = None
     primary_language: Optional[str] = None
     school_age_child_school: Optional[str] = None
     custody_papers_apply: Optional[bool] = None
@@ -1143,8 +1622,8 @@ class AdmissionFormUpdate(BaseModel):
     emergency_medical_care: Optional[str] = None
     first_aid_procedures: Optional[str] = None
     above_info_is_correct: Optional[bool] = None
-    physical_exam_last_date: Optional[str] = None
-    dental_exam_last_date: Optional[str] = None
+    physical_exam_last_date: Optional[date] = None
+    dental_exam_last_date: Optional[date] = None
     allergies: Optional[str] = None
     asthma: Optional[str] = None
     bleeding_problems: Optional[str] = None
@@ -1190,7 +1669,7 @@ class AdmissionFormUpdate(BaseModel):
     fears_conflicts: Optional[str] = None
     c_response_frustration: Optional[str] = None
     favorite_activities: Optional[str] = None
-    last_five_years_moved: Optional[str] = None
+    last_five_years_moved: Optional[bool] = None
     things_used_home: Optional[str] = None
     hours_of_television_daily: Optional[str] = None
     language_at_home: Optional[str] = None
@@ -1248,28 +1727,78 @@ class AdmissionFormUpdate(BaseModel):
     social_media_post: Optional[bool] = None
     parent_sign: Optional[str] = None
     admin_sign: Optional[str] = None
-   
+    
+    
 
 # --------- AdmissionForm Endpoints ---------
 
-@app.post("/admission_form/create")  
-async def create_admission_form(admission_form: AdmissionFormCreate = Body(...)):
+@app.post("/admission_form/create")
+async def create_admission_form(admission_form: AdmissionForm = Body(...)):
     connection = connect_to_database()
     if not connection:
         return {"error": "Failed to connect to database"}
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spCreateAdmissionForm(%s, %s, %s, %s, %s, %s, %s, %s);"
+            sql = """
+            CALL spCreateAdmissionForm(
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            );
+            """
             cursor.execute(sql, (
-                admission_form.child_first_name,
-                admission_form.child_last_name,
-                admission_form.nick_name,
-                admission_form.dob,
-                admission_form.primary_language,
-                admission_form.school_age_child_school,
-                admission_form.custody_papers_apply,
-                admission_form.gender,
+                admission_form.child_id, admission_form.additional_parent_id, admission_form.care_provider_id,
+                admission_form.dentist_id, admission_form.nick_name, admission_form.primary_language,
+                admission_form.school_age_child_school, admission_form.custody_papers_apply, admission_form.gender,
+                admission_form.special_diabilities, admission_form.allergies_reaction, admission_form.additional_info,
+                admission_form.medication, admission_form.health_insurance, admission_form.policy_number,
+                admission_form.emergency_medical_care, admission_form.first_aid_procedures,
+                admission_form.above_info_is_correct, admission_form.physical_exam_last_date,
+                admission_form.dental_exam_last_date, admission_form.allergies, admission_form.asthma,
+                admission_form.bleeding_problems, admission_form.diabetes, admission_form.epilepsy,
+                admission_form.frequent_ear_infections, admission_form.frequent_illnesses,
+                admission_form.hearing_problems, admission_form.high_fevers, admission_form.hospitalization,
+                admission_form.rheumatic_fever, admission_form.seizures_convulsions,
+                admission_form.serious_injuries_accidents, admission_form.surgeries, admission_form.vision_problems,
+                admission_form.medical_other, admission_form.illness_in_pregnancy, admission_form.condition_of_newborn,
+                admission_form.duration_of_pregnancy, admission_form.birth_weight_lbs, admission_form.birth_weight_oz,
+                admission_form.complications, admission_form.bottle_fed, admission_form.breast_fed,
+                admission_form.other_siblings_name, admission_form.other_siblings_age,
+                admission_form.fam_hist_allergies, admission_form.fam_hist_heart_problems,
+                admission_form.fam_hist_tuberculosis, admission_form.fam_hist_asthma,
+                admission_form.fam_hist_high_blood_pressure, admission_form.fam_hist_vision_problems,
+                admission_form.fam_hist_diabetes, admission_form.fam_hist_hyperactivity,
+                admission_form.fam_hist_epilepsy, admission_form.fam_hist_no_illness, admission_form.age_group_friends,
+                admission_form.neighborhood_friends, admission_form.relationship_with_mom,
+                admission_form.relationship_with_dad, admission_form.relationship_with_sib,
+                admission_form.relationship_extended_family, admission_form.fears_conflicts,
+                admission_form.c_response_frustration, admission_form.favorite_activities,
+                admission_form.last_five_years_moved, admission_form.things_used_home,
+                admission_form.hours_of_television_daily, admission_form.language_at_home,
+                admission_form.changes_home_situation, admission_form.educational_expectations_of_child,
+                admission_form.fam_his_instructions, admission_form.immunization_instructions,
+                admission_form.important_fam_members, admission_form.fam_celebrations,
+                admission_form.childcare_before, admission_form.reason_for_childcare_before,
+                admission_form.what_child_interests, admission_form.drop_off_time, admission_form.pick_up_time,
+                admission_form.restricted_diet, admission_form.restricted_diet_reason, admission_form.eat_own,
+                admission_form.eat_own_reason, admission_form.favorite_foods, admission_form.rest_middle_day,
+                admission_form.reason_rest_middle_day, admission_form.rest_routine, admission_form.toilet_trained,
+                admission_form.reason_for_toilet_trained, admission_form.existing_illness_allergy,
+                admission_form.explain_illness_allergy, admission_form.functioning_at_age,
+                admission_form.explain_functioning_at_age, admission_form.able_to_walk,
+                admission_form.explain_able_to_walk, admission_form.communicate_their_needs,
+                admission_form.explain_communicate_their_needs, admission_form.any_medication,
+                admission_form.explain_for_any_medication, admission_form.special_equipment,
+                admission_form.explain_special_equipment, admission_form.significant_periods,
+                admission_form.explain_significant_periods, admission_form.accommodations,
+                admission_form.explain_for_accommodations, admission_form.additional_information,
+                admission_form.child_info_is_correct, admission_form.child_pick_up_password,
+                admission_form.pick_up_password_form, admission_form.photo_video_permission_form,
+                admission_form.photo_permission_electronic, admission_form.photo_permission_post,
+                admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
+                admission_form.medical_transportation_waiver, admission_form.health_policies,
+                admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
+                admission_form.printed_social_media_post, admission_form.social_media_post,
+                admission_form.parent_sign, admission_form.admin_sign
             ))
             connection.commit()
 
@@ -1281,8 +1810,8 @@ async def create_admission_form(admission_form: AdmissionFormCreate = Body(...))
         if connection:
             connection.close()
 
-@app.get("/admission_form/get/{id}")  
-async def get_admission_form(id: int):
+@app.get("/admission_form/get/{child_id}")
+async def get_admission_form(child_id: int):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
@@ -1290,12 +1819,12 @@ async def get_admission_form(id: int):
     try:
         with connection.cursor() as cursor:
             sql = "CALL spGetAdmissionForm(%s);"
-            cursor.execute(sql, (id,))
+            cursor.execute(sql, (child_id,))
             result = cursor.fetchone()
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"Admission form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"Admission form with id {child_id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching admission form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -1303,7 +1832,7 @@ async def get_admission_form(id: int):
         if connection:
             connection.close()
 
-@app.get("/admission_form/getall")  
+@app.get("/admission_form/getall")
 async def get_all_admission_forms():
     connection = connect_to_database()
     if not connection:
@@ -1323,74 +1852,85 @@ async def get_all_admission_forms():
             connection.close()
 
 @app.put("/admission_form/update/{child_id}")
-async def update_admission_form(child_id: int, form: AdmissionFormUpdate = Body(...)):
+async def update_admission_form(child_id: int, admission_form: AdmissionForm = Body(...)):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            # Define the SQL query with positional placeholders
             sql = """
-                CALL spUpdateAdmissionForm(
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                );
+            CALL spUpdateAdmissionForm(
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            );
             """
-            
-            # Prepare the parameters for the stored procedure
-            params = (
-                form.child_id, form.parent_id, form.additional_parent_id, form.classId, form.care_provider_id, 
-                form.dentist_id, form.child_first_name, form.child_last_name, form.nick_name, form.dob,
-                form.primary_language, form.school_age_child_school, form.custody_papers_apply, form.gender,
-                form.special_diabilities, form.allergies_reaction, form.additional_info, form.medication,
-                form.health_insurance, form.policy_number, form.emergency_medical_care, form.first_aid_procedures,
-                form.above_info_is_correct, form.physical_exam_last_date, form.dental_exam_last_date,
-                form.allergies, form.asthma, form.bleeding_problems, form.diabetes, form.epilepsy,
-                form.frequent_ear_infections, form.frequent_illnesses, form.hearing_problems, form.high_fevers,
-                form.hospitalization, form.rheumatic_fever, form.seizures_convulsions, form.serious_injuries_accidents,
-                form.surgeries, form.vision_problems, form.medical_other, form.illness_in_pregnancy,
-                form.condition_of_newborn, form.duration_of_pregnancy, form.birth_weight_lbs, form.birth_weight_oz,
-                form.complications, form.bottle_fed, form.breast_fed, form.other_siblings_name, form.other_siblings_age,
-                form.fam_hist_allergies, form.fam_hist_heart_problems, form.fam_hist_tuberculosis,
-                form.fam_hist_asthma, form.fam_hist_high_blood_pressure, form.fam_hist_vision_problems,
-                form.fam_hist_diabetes, form.fam_hist_hyperactivity, form.fam_hist_epilepsy, form.fam_hist_no_illness,
-                form.age_group_friends, form.neighborhood_friends, form.relationship_with_mom, form.relationship_with_dad,
-                form.relationship_with_sib, form.relationship_extended_family, form.fears_conflicts,
-                form.c_response_frustration, form.favorite_activities, form.last_five_years_moved,
-                form.things_used_home, form.hours_of_television_daily, form.language_at_home, form.changes_home_situation,
-                form.educational_expectations_of_child, form.fam_his_instructions, form.immunization_instructions,
-                form.important_fam_members, form.fam_celebrations, form.childcare_before, form.reason_for_childcare_before,
-                form.what_child_interests, form.drop_off_time, form.pick_up_time, form.restricted_diet,
-                form.restricted_diet_reason, form.eat_own, form.eat_own_reason, form.favorite_foods, form.rest_middle_day,
-                form.reason_rest_middle_day, form.rest_routine, form.toilet_trained, form.reason_for_toilet_trained,
-                form.existing_illness_allergy, form.explain_illness_allergy, form.functioning_at_age,
-                form.explain_functioning_at_age, form.able_to_walk, form.explain_able_to_walk,
-                form.communicate_their_needs, form.explain_communicate_their_needs, form.any_medication,
-                form.explain_for_any_medication, form.special_equipment, form.explain_special_equipment,
-                form.significant_periods, form.explain_significant_periods, form.accommodations,
-                form.explain_for_accommodations, form.additional_information, form.child_info_is_correct,
-                form.child_pick_up_password, form.pick_up_password_form, form.photo_video_permission_form,
-                form.photo_permission_electronic, form.photo_permission_post, form.security_release_policy_form,
-                form.med_technicians_med_transportation_waiver, form.medical_transportation_waiver, form.health_policies,
-                form.parent_sign_outside_waiver, form.approve_social_media_post, form.printed_social_media_post,
-                form.social_media_post, form.parent_sign, form.admin_sign
-            )
-            
-            cursor.execute(sql, params)
+            cursor.execute(sql, (
+                child_id, admission_form.additional_parent_id, admission_form.care_provider_id,
+                admission_form.dentist_id, admission_form.nick_name, admission_form.primary_language,
+                admission_form.school_age_child_school, admission_form.custody_papers_apply, admission_form.gender,
+                admission_form.special_diabilities, admission_form.allergies_reaction, admission_form.additional_info,
+                admission_form.medication, admission_form.health_insurance, admission_form.policy_number,
+                admission_form.emergency_medical_care, admission_form.first_aid_procedures,
+                admission_form.above_info_is_correct, admission_form.physical_exam_last_date,
+                admission_form.dental_exam_last_date, admission_form.allergies, admission_form.asthma,
+                admission_form.bleeding_problems, admission_form.diabetes, admission_form.epilepsy,
+                admission_form.frequent_ear_infections, admission_form.frequent_illnesses,
+                admission_form.hearing_problems, admission_form.high_fevers, admission_form.hospitalization,
+                admission_form.rheumatic_fever, admission_form.seizures_convulsions,
+                admission_form.serious_injuries_accidents, admission_form.surgeries, admission_form.vision_problems,
+                admission_form.medical_other, admission_form.illness_in_pregnancy, admission_form.condition_of_newborn,
+                admission_form.duration_of_pregnancy, admission_form.birth_weight_lbs, admission_form.birth_weight_oz,
+                admission_form.complications, admission_form.bottle_fed, admission_form.breast_fed,
+                admission_form.other_siblings_name, admission_form.other_siblings_age,
+                admission_form.fam_hist_allergies, admission_form.fam_hist_heart_problems,
+                admission_form.fam_hist_tuberculosis, admission_form.fam_hist_asthma,
+                admission_form.fam_hist_high_blood_pressure, admission_form.fam_hist_vision_problems,
+                admission_form.fam_hist_diabetes, admission_form.fam_hist_hyperactivity,
+                admission_form.fam_hist_epilepsy, admission_form.fam_hist_no_illness, admission_form.age_group_friends,
+                admission_form.neighborhood_friends, admission_form.relationship_with_mom,
+                admission_form.relationship_with_dad, admission_form.relationship_with_sib,
+                admission_form.relationship_extended_family, admission_form.fears_conflicts,
+                admission_form.c_response_frustration, admission_form.favorite_activities,
+                admission_form.last_five_years_moved, admission_form.things_used_home,
+                admission_form.hours_of_television_daily, admission_form.language_at_home,
+                admission_form.changes_home_situation, admission_form.educational_expectations_of_child,
+                admission_form.fam_his_instructions, admission_form.immunization_instructions,
+                admission_form.important_fam_members, admission_form.fam_celebrations,
+                admission_form.childcare_before, admission_form.reason_for_childcare_before,
+                admission_form.what_child_interests, admission_form.drop_off_time, admission_form.pick_up_time,
+                admission_form.restricted_diet, admission_form.restricted_diet_reason, admission_form.eat_own,
+                admission_form.eat_own_reason, admission_form.favorite_foods, admission_form.rest_middle_day,
+                admission_form.reason_rest_middle_day, admission_form.rest_routine, admission_form.toilet_trained,
+                admission_form.reason_for_toilet_trained, admission_form.existing_illness_allergy,
+                admission_form.explain_illness_allergy, admission_form.functioning_at_age,
+                admission_form.explain_functioning_at_age, admission_form.able_to_walk,
+                admission_form.explain_able_to_walk, admission_form.communicate_their_needs,
+                admission_form.explain_communicate_their_needs, admission_form.any_medication,
+                admission_form.explain_for_any_medication, admission_form.special_equipment,
+                admission_form.explain_special_equipment, admission_form.significant_periods,
+                admission_form.explain_significant_periods, admission_form.accommodations,
+                admission_form.explain_for_accommodations, admission_form.additional_information,
+                admission_form.child_info_is_correct, admission_form.child_pick_up_password,
+                admission_form.pick_up_password_form, admission_form.photo_video_permission_form,
+                admission_form.photo_permission_electronic, admission_form.photo_permission_post,
+                admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
+                admission_form.medical_transportation_waiver, admission_form.health_policies,
+                admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
+                admission_form.printed_social_media_post, admission_form.social_media_post,
+                admission_form.parent_sign, admission_form.admin_sign
+            ))
             connection.commit()
 
-            return {"message": f"Admission form with child_id {child_id} updated successfully"}
+            return {"message": f"Admission form with id {child_id} updated successfully"}
     except pymysql.MySQLError as err:
         print(f"Error updating admission form: {err}")
-        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
             connection.close()
 
-@app.put("/admission_form/delete/{id}")  
-async def delete_admission_form(id: int):
+@app.put("/admission_form/delete/{child_id}")
+async def delete_admission_form(child_id: int):
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
@@ -1398,21 +1938,16 @@ async def delete_admission_form(id: int):
     try:
         with connection.cursor() as cursor:
             sql = "CALL spDeleteAdmissionForm(%s);"
-            cursor.execute(sql, (id,))
+            cursor.execute(sql, (child_id,))
             connection.commit()
 
-            return {"message": f"Admission form with id {id} deleted successfully"}
+            return {"message": f"Admission Form with child id {child_id} successfully Deleted (SDoft delete)"}
     except pymysql.MySQLError as err:
         print(f"Error deleting admission form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
             connection.close()
-
-
-
-
-
 
 
 # AuthorizationForm Schema
@@ -1880,268 +2415,7 @@ async def delete_parent_handbook(id: int):
         if connection:
             connection.close()
 
-
-
-
-
-
-
-
-
-
-# EmergencyDetail Schema
-class EmergencyDetail(BaseModel):
-    contact_name: str
-    contact_relationship: str
-    street_address: str
-    city_address: str
-    state_address: str
-    zip_address: str
-    contact_telephone_number: str
-
-# --------- EmergencyDetails Endpoints ---------
-
-@app.post("/emergency_details/create")  
-async def create_emergency_detail(emergencydetail: EmergencyDetail = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spCreateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (
-                emergencydetail.contact_name,
-                emergencydetail.contact_relationship,
-                emergencydetail.street_address,
-                emergencydetail.city_address,
-                emergencydetail.state_address,
-                emergencydetail.zip_address,
-                emergencydetail.contact_telephone_number
-            ))
-            connection.commit()
-
-            return {"message": "Emergency detail created successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/emergency_details/get/{id}")  
-async def get_emergency_detail(id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetEmergencyDetail(%s);"
-            cursor.execute(sql, (id,))
-            result = cursor.fetchone()
-            if result:
-                return result
-            else:
-                raise HTTPException(status_code=404, detail=f"Emergency detail with id {id} not found")
-    except pymysql.MySQLError as err:
-        print(f"Error fetching emergency detail: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/emergency_details/getall")  
-async def get_all_emergency_details():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllEmergencyDetails();"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching emergency details: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/emergency_details/update/{id}")  
-async def update_emergency_detail(id: int, emergencydetail: EmergencyDetail = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spUpdateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (
-                id,
-                emergencydetail.contact_name,
-                emergencydetail.contact_relationship,
-                emergencydetail.street_address,
-                emergencydetail.city_address,
-                emergencydetail.state_address,
-                emergencydetail.zip_address,
-                emergencydetail.contact_telephone_number
-            ))
-            connection.commit()
-
-            return {"message": f"Emergency detail with id {id} updated successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error updating emergency detail: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/emergency_details/delete/{id}")  
-async def delete_emergency_detail(id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spDeleteEmergencyDetail(%s);"
-            cursor.execute(sql, (id,))
-            connection.commit()
-
-            return {"message": f"Emergency detail with id {id} deleted successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error deleting emergency detail: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-
-# EmergencyContact Schema
-class EmergencyContact(BaseModel):
-    emergency_id: int
-    child_id: int
-
-# --------- EmergencyContact Endpoints ---------
-
-@app.post("/emergency_contact/create")
-async def create_emergency_contact(contact: EmergencyContact = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spCreateEmergencyContact(%s, %s);"
-            cursor.execute(sql, (contact.emergency_id, contact.child_id))
-            connection.commit()
-            return {"message": "Emergency contact created successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/emergency_contact/get/{emergency_id}/{child_id}")
-async def get_emergency_contact(emergency_id: int, child_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetEmergencyContact(%s, %s);"
-            cursor.execute(sql, (emergency_id, child_id))
-            result = cursor.fetchone()
-            if result:
-                return result
-            else:
-                raise HTTPException(status_code=404, detail="Emergency contact not found")
-    except pymysql.MySQLError as err:
-        print(f"Error fetching emergency contact: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/emergency_contact/getall")
-async def get_all_emergency_contacts():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllEmergencyContact();"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching all emergency contacts: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/emergency_contact/update/{old_emergency_id}/{old_child_id}")
-async def update_emergency_contact(
-    old_emergency_id: int,
-    old_child_id: int,
-    contact: EmergencyContact = Body(...)
-):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spUpdateEmergencyContact(%s, %s, %s, %s);"
-            cursor.execute(sql, (old_emergency_id, old_child_id, contact.emergency_id, contact.child_id))
-            connection.commit()
-            return {"message": "Emergency contact updated successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error updating emergency contact: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/emergency_contact/delete/{emergency_id}/{child_id}")
-async def delete_emergency_contact(emergency_id: int, child_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spDeleteEmergencyContact(%s, %s);"
-            cursor.execute(sql, (emergency_id, child_id))
-            connection.commit()
-            return {"message": "Emergency contact deleted successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error deleting emergency contact: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Additional APIs
 
 @app.get("/goddard_all_form/all")
 async def get_goddard_all_form_info():
@@ -2264,186 +2538,7 @@ async def fetch_form_info(form_id: int):
             connection.close()
 
 
-@app.get("/sign_up/all")
-async def get_all_signup():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
 
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllSignUpInfo();"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching signup_info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/sign_up/is_admin/{email}")
-async def fetch_form_info(email: str):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetIsAdminEmail(%s);"
-            cursor.execute(sql, (email,))
-            result = cursor.fetchone()
-            if result:
-                return result
-            else:
-                raise HTTPException(status_code=404, detail=f"Form info with id {form_id} not found")
-    except pymysql.MySQLError as err:
-        print(f"Error fetching form info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.post("/sign_up/add")
-async def create_signup_info(signup_info: SignUpInfo = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
-            sql = "CALL spCreateSignUpInfo(%s, %s, %s, %s, %s);"
-            cursor.execute(sql, (signup_info.email_id, invite_id, signup_info.password, signup_info.admin, signup_info.temp_password))
-            connection.commit()
-
-            return {"message": "SignUpInfo created successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-
-# mail trigger
-@app.post("/mail/send")
-async def create_parent_invite_and_mail_trigger(invite: ParentInvite = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
-            sql = "CALL spCreateParentInvite(%s, %s, %s, %s, %s, %s);"
-            cursor.execute(sql, (invite.email, invite_id, invite.parent_name, invite.child_full_name, "active", invite.signed_up_email))
-            connection.commit()
-            sender = 'noreply.goddard@gmail.com'
-            app_password = 'ynir rnbf owdn mapx'
-
-
-            subject = "Invitation to Create an Account for The Goddard school Admission"
-
-
-            html_content = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
-                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <p>Dear {invite.parent_name},</p>
-                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{invite.child_full_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
-                    <p style="text-align: center;">
-                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
-                    </p>
-                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
-                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
-
-                </div>
-            </body>
-            </html>
-            """
-
-            # Initialize Yagmail with the sender's Gmail credentials
-            yag = yagmail.SMTP(user=sender, password=app_password)
-
-            # Sending the email with HTML table in the body and Excel attachment
-            yag.send(to=invite.email, subject=subject, contents=html_content)
-
-            return {"message": "Parent invite created and Email sent successfully!"}
-
-    except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-
-# mail trigger
-@app.post("/forget_password/{email}")
-async def password_change(email: str):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
-            sql = "CALL spGetSignUpInfo(%s);"
-            cursor.execute(sql, (email,))
-            result = cursor.fetchone()
-            sql2 = "CALL spUpdateSignUpInfoInviteID(%s, %s);"
-            cursor.execute(sql2, (email,invite_id))
-            connection.commit()
-            
-            if result:
-                parent_invite_sql = "CALL spGetParentInvite(%s);"
-                cursor.execute(parent_invite_sql, (email,))
-                parent_invite_detail = cursor.fetchone()
-
-                if parent_invite_detail:
-                    sender = 'noreply.goddard@gmail.com'
-                    app_password = 'ynir rnbf owdn mapx'
-
-
-                    subject = "Reset Your Password for The Goddard school Admission Portal"
-
-
-                    html_content = f"""
-                    <html>
-                    <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
-                        <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                            <p>Dear {parent_invite_detail["parent_name"]},</p>
-                            <p>We hope this message finds you well. It appears that you have requested to reset your password for your account on the <strong>The Goddard school</strong> admission portal.<br><br>To reset your password and regain access to your account, please click on the link below:</p>
-                            <p style="text-align: center;">
-                                <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
-                            </p>
-                            <p>Once you have reset your password, you will be able to log in and continue with the admission process. If you did not request a password reset or have any questions, please do not hesitate to contact our support team for assistance.<br><br>hank you for your attention to this matter. We look forward to assisting you with the admission process and welcoming your son, {parent_invite_detail["child_full_name"]}, to The Goddard School.</p>
-                            <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
-
-                        </div>
-                    </body>
-                    </html>
-                    """
-
-                    # Initialize Yagmail with the sender's Gmail credentials
-                    yag = yagmail.SMTP(user=sender, password=app_password)
-
-                    # Sending the email with HTML table in the body and Excel attachment
-                    yag.send(to=email, subject=subject, contents=html_content)
-
-                    return {"message": "Password reset email sent successfully!"}
-            else:
-                raise HTTPException(status_code=404, detail=f"SignUpInfo with email_id {email} not found")
-    except pymysql.MySQLError:
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
 
 @app.get("/admission_child_personal/child_count")  
 async def get_all_admission_forms_count():
@@ -2730,232 +2825,6 @@ async def get_personal_info_all_complete_form_status_based_on_year(id: int, year
             connection.close()
 
 
-# Schema for StudentFormRepository
-class StudentFormRepository(BaseModel):
-    child_id: int
-    form_id: int
-
-# --------- StudentFormRepository Endpoints ---------
-
-# Create a new entry in student_form_repository
-@app.post("/student_form_repository/create")
-async def create_student_form_repository(entry: StudentFormRepository = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spCreateStudentFormRepository(%s, %s);"
-            cursor.execute(sql, (entry.child_id, entry.form_id))
-            connection.commit()
-            return {"message": "Student-Form link created successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-# Get a specific entry from student_form_repository
-@app.get("/student_form_repository/get/{child_id}/{form_id}")
-async def get_student_form_repository(child_id: int, form_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetStudentFormRepository(%s, %s);"
-            cursor.execute(sql, (child_id, form_id))
-            result = cursor.fetchone()
-            if result:
-                return result
-            else:
-                raise HTTPException(status_code=404, detail="Student-Form link not found")
-    except pymysql.MySQLError as err:
-        print(f"Error fetching student-form link: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-# Get all active entries from student_form_repository
-@app.get("/student_form_repository/getall")
-async def get_all_student_form_repository():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllStudentFormRepository();"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching student-form links: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/student_form_repository/update/{child_id}/{form_id}")
-async def update_student_form_repository(
-    child_id: int,
-    form_id: int,
-    new_entry: StudentFormRepository = Body(...)
-):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-            cursor.execute(sql, (child_id, form_id, new_entry.child_id, new_entry.form_id))
-            connection.commit()
-            return {"message": "Student-Form link updated successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error updating student-form link: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-            
-            
-# Soft delete a specific entry in student_form_repository
-@app.put("/student_form_repository/delete/{child_id}/{form_id}")
-async def delete_student_form_repository(child_id: int, form_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spDeleteStudentFormRepository(%s, %s);"
-            cursor.execute(sql, (child_id, form_id))
-            connection.commit()
-            return {"message": "Student-Form link deleted successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error deleting student-form link: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-
-
-# Schema for ClassFormRepository
-class ClassFormRepository(BaseModel):
-    class_id: int
-    form_id: int
-
-# --------- ClassFormRepository Endpoints ---------
-
-@app.post("/class_form_repository/create")  
-async def create_class_form_repository(entry: ClassFormRepository = Body(...)):
-    connection = connect_to_database()
-    if not connection:
-        return {"error": "Failed to connect to database"}
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spCreateClassFormRepository(%s, %s);"
-            cursor.execute(sql, (entry.class_id, entry.form_id))
-            connection.commit()
-
-            return {"message": "Class-Form link created successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/class_form_repository/get/{class_id}/{form_id}")  
-async def get_class_form_repository(class_id: int, form_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetClassFormRepository(%s, %s);"
-            cursor.execute(sql, (class_id, form_id))
-            result = cursor.fetchone()
-            if result:
-                return result
-            else:
-                raise HTTPException(status_code=404, detail=f"Class-Form link not found")
-    except pymysql.MySQLError as err:
-        print(f"Error fetching class-form link: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.get("/class_form_repository/getall")  
-async def get_all_class_form_repository():
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetAllClassFormRepository();"
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-    except pymysql.MySQLError as err:
-        print(f"Error fetching class-form links: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/class_form_repository/update/{class_id}/{form_id}")  
-async def update_class_form_repository(
-    class_id: int, form_id: int, 
-    new_entry: ClassFormRepository = Body(...)
-):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spUpdateClassFormRepository(%s, %s, %s, %s);"
-            cursor.execute(sql, (class_id, form_id, new_entry.class_id, new_entry.form_id))
-            connection.commit()
-
-            return {"message": "Class-Form link updated successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error updating class-form link: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
-
-@app.put("/class_form_repository/delete/{class_id}/{form_id}")  
-async def delete_class_form_repository(class_id: int, form_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
-
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spDeleteClassFormRepository(%s, %s);"
-            cursor.execute(sql, (class_id, form_id))
-            connection.commit()
-
-            return {"message": "Class-Form link deleted successfully"}
-    except pymysql.MySQLError as err:
-        print(f"Error deleting class-form link: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
 
 
 @app.get("/admission_child_personal/form_status/{form_name}")
@@ -2997,6 +2866,298 @@ async def get_all_child_overall_form_status():
                 raise HTTPException(status_code=404, detail="No child found!!!!!")
     except pymysql.MySQLError as err:
         print(f"Error fetching signup_info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+
+
+
+
+
+
+# 3rd Phase APIs
+
+
+
+@app.post("/parent_invite_with_mail_trigger/create")
+async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+
+            parent_table_sql = """
+            CALL spCreateParentInfoAndGetID(%s, @parent_id);
+            """
+            cursor.execute(parent_table_sql, (parent_invite.parent_name,))
+
+            # Fetch the result of the stored procedure (OUT parameter)
+            cursor.execute("SELECT @parent_id AS parent_id;")
+            res = cursor.fetchone()
+            parent_id = res["parent_id"]
+
+            # Call another stored procedure for child info
+            child_table_sql = """
+            CALL spCreateChildInfo(%s, %s, %s, %s, %s, @child_id);
+            """
+            cursor.execute(child_table_sql, (
+                parent_id, 
+                parent_invite.child_classroom_id, 
+                parent_invite.child_fname, 
+                parent_invite.child_lname,  
+                None
+            ))
+            
+            # Retrieve the child_id from the output variable
+            cursor.execute("SELECT @child_id AS child_id;")
+            result = cursor.fetchone()
+            child_id = result['child_id']
+            connection.commit()
+
+            # Get the current UTC time
+            current_utc_time = datetime.utcnow()
+            uuid1 = shortuuid.uuid()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
+
+            # Call stored procedure to trigger email invite
+            email_trigger_sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
+            cursor.execute(email_trigger_sql, (parent_invite.invite_email, invite_id, parent_id, current_utc_time))
+            connection.commit()
+
+            # Set up email parameters
+            sender = 'noreply.goddard@gmail.com'
+            app_password = 'ynir rnbf owdn mapx'
+            subject = "Invitation to Create an Account for The Goddard School Admission"
+
+            # Email content in HTML
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <p>Dear {parent_invite.parent_name},</p>
+                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{parent_invite.child_fname + " " + parent_invite.child_lname }</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
+                    <p style="text-align: center;">
+                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                    </p>
+                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
+                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+                </div>
+            </body>
+            </html>
+            """
+
+            # Initialize Yagmail with the sender's Gmail credentials
+            yag = yagmail.SMTP(user=sender, password=app_password)
+
+            # Sending the email
+            yag.send(to=parent_invite.invite_email, subject=subject, contents=html_content)
+
+            return {"message": "Parent invite created and Email sent successfully!"}
+
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.post("/sign_up/create")
+async def sign_up_create(sign_up_data: dict = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            invite_id = sign_up_data.get("invite_id")
+            email = sign_up_data.get("email")
+            password = sign_up_data.get("password")
+            sql = "CALL spGetParentIdInInviteTable(%s);"
+            cursor.execute(sql, (invite_id,))
+            result = cursor.fetchone()
+            print(result)
+            
+            if result:
+                parent_id = result['parent_id']
+                password_update_sql = "CALL spUpdateParentInfoPassword(%s, %s, %s);"
+                cursor.execute(password_update_sql, (parent_id,email, password))
+                connection.commit()
+
+                return {"message": "SignUp Data successfully updated"}
+            else:
+                raise HTTPException(status_code=404, detail=f"signup_id {invite_id} is not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching signup_info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.post("/sign_in/check")
+async def signin_check(sign_up_data: dict = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            email = sign_up_data.get("email")
+            password = sign_up_data.get("password")
+            sql = "CALL spGetAdminInfo(%s);"
+            cursor.execute(sql, (email,))
+            result = cursor.fetchone()
+            if result:
+                db_password = result['password']
+                if(password == db_password):
+                    return {"isAdmin": True}
+                else:
+                    return {"error" : f"admin_id {email} password was mismatch"}
+            else:
+               parent_check_sql = "CALL spGetParentInfoBasedEmail(%s);"
+               cursor.execute(parent_check_sql, (email,))
+               parent_check_result = cursor.fetchone() 
+               if parent_check_result:
+                   db_password = parent_check_result["password"]
+                   if(password == db_password):
+                     return {"isParent": True}
+                   else:
+                     return {"error" : f"parent_id {email} password was mismatch"}
+
+               else:
+                    raise HTTPException(status_code=404, detail={"error" : f"signin_id {email} is not found"})
+    except pymysql.MySQLError as err:
+        print(f"Error fetching signup_info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_status/getall")
+async def get_all_invite_status():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetInviteStatus();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching student-form links: {err}")
+        raise HTTPException(status_code=500, detail={"error": "DB error"})
+    finally:
+        if connection:
+            connection.close()
+
+
+
+
+@app.get("/parent_invite_info/all")
+async def get_parent_invites():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllParentInvites();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/all_parent_email")
+async def get_parent_invite_emails():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllParentInviteEmails()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/invite_status/{email}")
+async def get_parent_invite_status(email: str):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetParentInviteStatus(%s)"
+            cursor.execute(sql, email)
+            result = cursor.fetchone()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/accepted_invite")
+async def get_parent_accepted_invite_emails():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetInviteStatus()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            accepted_mails = []
+            for data in result:
+                if(data["status"] == "Active"):
+                    accepted_mails.append({"parent_email": data["invite_email"]})
+            return accepted_mails     
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/parent_invite_info/not_accepted_invite")
+async def get_parent_not_accepted_invite_emails():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetInviteStatus()"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            not_accepted_mails = []
+            for data in result:
+                if(data["status"] == "Inactive"):
+                    not_accepted_mails.append({"parent_email": data["invite_email"]})
+            return not_accepted_mails     
+    except pymysql.MySQLError as err:
+        print(f"Error fetching parent invites: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
