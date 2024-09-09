@@ -1953,13 +1953,13 @@ async def delete_admission_form(child_id: int):
 # AuthorizationForm Schema
 class AuthorizationForm(BaseModel):
     child_id: int
-    bank_routing: str
-    bank_account: str
-    driver_license: str
-    state: str
-    myself: str
-    parent_sign: str
-    admin_sign: str
+    bank_routing: Optional[str] = None
+    bank_account: Optional[str] = None
+    driver_license: Optional[str] = None
+    state: Optional[str] = None
+    myself: Optional[str] = None
+    parent_sign: Optional[str] = None
+    admin_sign: Optional[str] = None
 
 # --------- AuthorizationForm Endpoints ---------
 
@@ -2084,31 +2084,31 @@ async def delete_authorization_form(id: int):
 # EnrollmentForm Schema
 class EnrollmentForm(BaseModel):
     child_id: int
-    enrollment_name: str
-    point_one_field: str
-    point_two_init: str
-    point_three_ini: str
-    point_four_init: str
-    point_five_init: str
-    point_six_init: str
-    point_seven_init: str
-    point_eight_init: str
-    point_nine_init: str
-    point_ten_init: str
-    point_eleven_init: str
-    point_twelve_init: str
-    point_thirteen_init: str
-    point_fourteen_init: str
-    point_fifteen_initi: str
-    point_sixteen_init: str
-    point_seventeen_init: str
-    point_eighteen_init: str
-    start_date: str
-    schedule_date: str
-    full_day: bool
-    half_day: bool
-    parent_sign: str
-    admin_sign: str
+    enrollment_name: Optional[str] = None
+    point_one_field: Optional[str] = None
+    point_two_init: Optional[str] = None
+    point_three_ini: Optional[str] = None
+    point_four_init: Optional[str] = None
+    point_five_init: Optional[str] = None
+    point_six_init: Optional[str] = None
+    point_seven_init: Optional[str] = None
+    point_eight_init: Optional[str] = None
+    point_nine_init: Optional[str] = None
+    point_ten_init: Optional[str] = None
+    point_eleven_init: Optional[str] = None
+    point_twelve_init: Optional[str] = None
+    point_thirteen_init: Optional[str] = None
+    point_fourteen_init: Optional[str] = None
+    point_fifteen_initi: Optional[str] = None
+    point_sixteen_init: Optional[str] = None
+    point_seventeen_init: Optional[str] = None
+    point_eighteen_init: Optional[str] = None
+    start_date: Optional[str] = None
+    schedule_date: Optional[str] = None
+    full_day: Optional[bool] = None
+    half_day: Optional[bool] = None
+    parent_sign: Optional[str] = None
+    admin_sign: Optional[str] = None
 
 # --------- EnrollmentForm Endpoints ---------
 
@@ -2239,26 +2239,26 @@ async def delete_enrollment(id: int):
 # ParentHandbook Schema
 class ParentHandbook(BaseModel):
     child_id: int
-    welcome_goddard_agmt: bool
-    mission_statement_agmt: bool
-    general_information_agmt: bool
-    statement_confidentiality_agmt: bool
-    parent_access_agmt: bool
-    release_children_agmt: bool
-    registration_fees_agmt: bool
-    outside_engagements_agmt: bool
-    health_policies_agmt: bool
-    medication_procedures_agmt: bool
-    bring_school_agmt: bool
-    rest_time_agmt: bool
-    training_philosophy_agmt: bool
-    affiliation_policy_agmt: bool
-    security_issue_agmt: bool
-    expulsion_policy_agmt: bool
-    addressing_individual_child_agmt: bool
-    finalword_agmt: bool
-    parent_sign: str
-    admin_sign: str
+    welcome_goddard_agmt: Optional[bool] = None
+    mission_statement_agmt: Optional[bool] = None
+    general_information_agmt: Optional[bool] = None
+    statement_confidentiality_agmt: Optional[bool] = None
+    parent_access_agmt: Optional[bool] = None
+    release_children_agmt: Optional[bool] = None
+    registration_fees_agmt: Optional[bool] = None
+    outside_engagements_agmt: Optional[bool] = None
+    health_policies_agmt: Optional[bool] = None
+    medication_procedures_agmt: Optional[bool] = None
+    bring_school_agmt: Optional[bool] = None
+    rest_time_agmt: Optional[bool] = None
+    training_philosophy_agmt: Optional[bool] = None
+    affiliation_policy_agmt: Optional[bool] = None
+    security_issue_agmt: Optional[bool] = None
+    expulsion_policy_agmt: Optional[bool] = None
+    addressing_individual_child_agmt: Optional[bool] = None
+    finalword_agmt: Optional[bool] = None
+    parent_sign: Optional[str] = None
+    admin_sign: Optional[str] = None
 
 # --------- ParentHandbook Endpoints ---------
 
@@ -2541,14 +2541,14 @@ async def fetch_form_info(form_id: int):
 
 
 @app.get("/admission_child_personal/child_count")  
-async def get_all_admission_forms_count():
+async def get_all_child_info_count():
     connection = connect_to_database()
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spGetAllAdmissionFormsCount();"
+            sql = "CALL spGetAllChildCount();"
             cursor.execute(sql)
             result = cursor.fetchone()
             if result:
@@ -2570,7 +2570,7 @@ async def get_all_admission_forms_child_names():
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spGetAllAdmissionFormsChildNames();"
+            sql = "CALL spGetAllChildNames();"
             cursor.execute(sql)
             result = cursor.fetchall()
             if result:
@@ -2622,12 +2622,11 @@ async def get_enrollment_form_status(id: int):
             else:
                 raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
     except pymysql.MySQLError as err:
-        print(f"Error fetching authorization form: {err}")
+        print(f"Error fetching Enrollment Info form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
             connection.close()
-
 
 @app.get("/parent_handbook/form_status/{id}")
 async def get_parent_handbook_status(id: int):
@@ -2645,11 +2644,12 @@ async def get_parent_handbook_status(id: int):
             else:
                 raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
     except pymysql.MySQLError as err:
-        print(f"Error fetching authorization form: {err}")
+        print(f"Error fetching Parent Handbook form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
             connection.close()
+
 
 @app.get("/admission_child_personal/incomplete_form_status/{id}")
 async def get_personal_info_all_incomplete_form_status(id: int):
@@ -2742,6 +2742,7 @@ async def get_personal_info_all__form_status(id: int):
     finally:
         if connection:
             connection.close()
+
 
 @app.get("/admission_child_personal/parent_email/{id}")
 async def get_parent_all__child(id: str):
