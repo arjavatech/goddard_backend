@@ -2660,7 +2660,18 @@ END //
 DELIMITER ;
 
 
+DELIMITER //
 
+CREATE PROCEDURE spGetChildName(
+    IN p_parent_id INT
+)
+BEGIN
+    SELECT * FROM child_info
+    WHERE 
+        parent_id = p_parent_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
 
 
 
@@ -2862,6 +2873,19 @@ BEGIN
 END //
 
 DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE spClassBasedChildCount(
+	IN p_class_id  INT
+    )
+BEGIN
+    SELECT COUNT(*) AS count FROM child_info
+    WHERE 
+        class_id = p_class_id AND is_active = TRUE;
+END //
+DELIMITER ;
+
+
 
 
 DELIMITER //

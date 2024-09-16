@@ -282,18 +282,20 @@ class ChildInfo(BaseModel):
     class_id: int
     child_first_name: str
     child_last_name: str
-    dob: Optional[str] = None  # Date as string in 'YYYY-MM-DD' format
+    dob: Optional[str] = None 
 
 # --------- ChildInfo Endpoints ---------
 
-app.post("/child_info/create")  
+@app.post("/child_info/create")  
 async def create_child_info(childinfo: ChildInfo = Body(...)):
+    print("welcome......")
     connection = connect_to_database()
     if not connection:
         return {"error": "Failed to connect to database"}
 
     try:
         with connection.cursor() as cursor:
+            print("helloo......")
             child_id = None
             sql = """
             CALL spCreateChildInfo(%s, %s, %s, %s, %s, @child_id);
@@ -322,6 +324,8 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
     finally:
         if connection:
             connection.close()
+
+
 
 def insert_into_other_forms(child_id):
     connection = connect_to_database()
@@ -415,6 +419,31 @@ async def update_child_info(child_id: int, childinfo: ChildInfo = Body(...)):
             connection.commit()
 
             return {"message": f"Child information with id {child_id} updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating child information: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.put("/child_info/update_class/{child_id}")  
+async def update_child_class_info(child_id: int, request: dict = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            CALL spUpdateChildClassId(%s, %s);
+            """
+            cursor.execute(sql, (
+                child_id, 
+                request.get("class_id")
+            ))
+            connection.commit()
+
+            return {"message": f"Child information with id {child_id} class_name was updated successfully"}
     except pymysql.MySQLError as err:
         print(f"Error updating child information: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2923,7 +2952,7 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
             # Get the current UTC time
             current_utc_time = datetime.utcnow()
             uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/signup.html?invite_id={uuid1}"
 
             # Call stored procedure to trigger email invite
             email_trigger_sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
@@ -2966,6 +2995,93 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
     finally:
         if connection:
             connection.close()
+
+
+
+@app.get("/parent_invite_mail/resend/{invite_email}")
+async def parent_invite_create(invite_email: str):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+
+            parent_table_sql = """
+            CALL spGetParentInvite(%s);
+            """
+            cursor.execute(parent_table_sql, (invite_email,))
+            res = cursor.fetchone()
+            parent_id = res["parent_id"]
+
+            parent_info_sql = "CALL spGetParentInfo(%s);"
+            cursor.execute(parent_info_sql, (parent_id,))
+            res2 = cursor.fetchone()
+            
+            parent_name = res2["parent_name"]
+
+
+            
+
+            # Call another stored procedure for child info
+            child_table_sql = """
+            CALL spGetChildName(%s);
+            """
+            cursor.execute(child_table_sql, (
+                parent_id,
+            ))
+            
+            result = cursor.fetchone()
+            child_name = result['child_first_name']+ " " + result['child_last_name']
+            connection.commit()
+
+            # Get the current UTC time
+            current_utc_time = datetime.utcnow()
+            uuid1 = shortuuid.uuid()
+            invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/signup.html?invite_id={uuid1}"
+
+            # Call stored procedure to trigger email invite
+            email_trigger_sql = "CALL spUpdateParentInvite(%s, %s, %s, %s);"
+            cursor.execute(email_trigger_sql, (invite_email, invite_id, parent_id, current_utc_time))
+            connection.commit()
+
+            # Set up email parameters
+            sender = 'noreply.goddard@gmail.com'
+            app_password = 'ynir rnbf owdn mapx'
+            subject = "Invitation to Create an Account for The Goddard School Admission"
+
+            # Email content in HTML
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <p>Dear {parent_name},</p>
+                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{child_name}</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
+                    <p style="text-align: center;">
+                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                    </p>
+                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
+                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+                </div>
+            </body>
+            </html>
+            """
+
+            # Initialize Yagmail with the sender's Gmail credentials
+            yag = yagmail.SMTP(user=sender, password=app_password)
+
+            # Sending the email
+            yag.send(to=invite_email, subject=subject, contents=html_content)
+
+            return {"message": "Parent invite Email sent successfully!"}
+
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
 
 @app.post("/sign_up/create")
 async def sign_up_create(sign_up_data: dict = Body(...)):
@@ -3033,7 +3149,6 @@ async def signin_check(sign_up_data: dict = Body(...)):
                else:
                     raise HTTPException(status_code=404, detail={"error" : f"signin_id {email} is not found"})
     except pymysql.MySQLError as err:
-        print(f"Error fetching signup_info: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
@@ -3159,6 +3274,28 @@ async def get_parent_not_accepted_invite_emails():
             return not_accepted_mails     
     except pymysql.MySQLError as err:
         print(f"Error fetching parent invites: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/class_based_child_count/{class_id}")  
+def get_class_based_child_count(class_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spClassBasedChildCount(%s);"
+            cursor.execute(sql,(class_id))
+            result = cursor.fetchone()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Child count with class id {class_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching emergency detail: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
