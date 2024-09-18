@@ -457,6 +457,7 @@ BEGIN
     UPDATE parent_info
     SET 
         parent_name = p_name,
+        email = p_email,
         street_address = p_street_address,
         city_address = p_city_address,
         state_address = p_state_address,

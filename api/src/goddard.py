@@ -2930,6 +2930,7 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
             cursor.execute("SELECT @parent_id AS parent_id;")
             res = cursor.fetchone()
             parent_id = res["parent_id"]
+            
 
             # Call another stored procedure for child info
             child_table_sql = """
@@ -3294,6 +3295,28 @@ def get_class_based_child_count(class_id: int):
                 return result
             else:
                 raise HTTPException(status_code=404, detail=f"Child count with class id {class_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching emergency detail: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/child_count_with_class_name")  
+def get_child_count_with_class_name():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spClassBasedChildCountWithClassName();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            if result:
+                return result
+            else:
+                raise HTTPException(status_code=404, detail=f"Child count not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching emergency detail: {err}")
         raise HTTPException(status_code=500, detail="Database error")
