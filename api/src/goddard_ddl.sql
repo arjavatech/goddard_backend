@@ -2608,9 +2608,12 @@ DELIMITER ;
 
 
 
+
+
 CREATE TABLE student_form_repository (
     child_id INT,
     form_id INT,
+    form_status INT,
     is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (child_id, form_id),
     FOREIGN KEY (child_id) REFERENCES child_info(child_id),
@@ -2628,11 +2631,12 @@ DELIMITER //
 
 CREATE PROCEDURE spCreateStudentFormRepository(
     IN p_childId INT,
-    IN p_formId INT
+    IN p_formId INT,
+    IN p_formstatus INT
 )
 BEGIN
-    INSERT INTO student_form_repository (child_id, form_id, is_active)
-    VALUES (p_childId, p_formId, TRUE);
+    INSERT INTO student_form_repository (child_id, form_id, form_status, is_active)
+    VALUES (p_childId, p_formId, p_formstatus, TRUE);
 END //
 
 DELIMITER ;
@@ -2647,32 +2651,19 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spGetStudentFormRepository(
-    IN p_childId INT,
-    IN p_formId INT
+    IN p_childId INT
 )
 BEGIN
     SELECT * FROM student_form_repository
     WHERE 
         child_id = p_childId 
-        AND form_id = p_formId 
         AND is_active = TRUE;
 END //
 
 DELIMITER ;
 
 
-DELIMITER //
 
-CREATE PROCEDURE spGetChildName(
-    IN p_parent_id INT
-)
-BEGIN
-    SELECT * FROM child_info
-    WHERE 
-        parent_id = p_parent_id AND is_active = TRUE;
-END //
-
-DELIMITER ;
 
 
 
@@ -2699,18 +2690,16 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE spUpdateStudentFormRepository(
-    IN p_oldChildId INT,
+    IN p_childId INT,
     IN p_oldFormId INT,
-    IN p_newChildId INT,
     IN p_newFormId INT
 )
 BEGIN
     UPDATE student_form_repository
     SET 
-        child_id = p_newChildId,
         form_id = p_newFormId
     WHERE 
-        child_id = p_oldChildId 
+        child_id = p_childId 
         AND form_id = p_oldFormId 
         AND is_active = TRUE;
 END //
@@ -2739,6 +2728,46 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE spDeleteStudentAllFormRepository(
+    IN p_childId INT
+)
+BEGIN
+    UPDATE student_form_repository
+    SET is_active = FALSE
+    WHERE 
+        child_id = p_childId;
+END //
+
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE spGetChildName(
+    IN p_parent_id INT
+)
+BEGIN
+    SELECT * FROM child_info
+    WHERE 
+        parent_id = p_parent_id AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
 
 
 
@@ -3309,3 +3338,197 @@ BEGIN
 END //
 
 DELIMITER ;
+
+
+-- 26-09-2024 SP
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetClassFormRepositoryBasedClassID`(
+    IN p_classId INT
+)
+BEGIN
+    SELECT * FROM class_form_repository
+    WHERE 
+        class_id = p_classId 
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetClassFormRepositoryBasedClassID`(
+    IN p_classId INT
+)
+BEGIN
+    SELECT form_id FROM class_form_repository
+    WHERE 
+        class_id = p_classId 
+        AND is_active = TRUE;
+END //
+
+DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spCreateEmptyAuthorizationForm`(
+    IN p_childId INT
+)
+BEGIN
+    INSERT INTO authorization_form (
+        child_id
+    ) VALUES (
+        p_childId
+    );
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+
+CREATE PROCEDURE `spCreateEmptyAdmissionForm`(
+    IN p_child_id INT
+)
+BEGIN
+    INSERT INTO admission_form (
+        child_id
+    ) VALUES (
+        p_child_id
+    );
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spCreateEmptyParentHandbook`(
+    IN p_child_id INT
+)
+BEGIN
+    INSERT INTO parent_handbook (
+        child_id
+    ) VALUES (
+        p_child_id
+    );
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spCreateEmptyEnrollmentForm`(
+    IN p_childId INT
+)
+BEGIN
+    INSERT INTO enrollment_form (
+        child_id
+    )
+    VALUES (
+        p_childId
+    );
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllClassRoomBasedChildDetails`(
+    IN p_classId INT
+)
+BEGIN
+    SELECT 
+    c.child_id,
+    c.child_first_name, 
+    c.child_last_name, 
+    cl.class_name,
+    p.email AS primary_email,
+    p2.email AS additional_parent_email,
+    CASE
+        WHEN MIN(fr.form_status) = 0 THEN 'Incomplete'
+        WHEN MIN(fr.form_status) = 1 THEN 'Approval Pending'
+        WHEN MIN(fr.form_status) = 2 THEN 'Completed'
+        ELSE 'Unknown Status'
+    END AS form_status
+FROM 
+    child_info c
+JOIN 
+    class_details cl ON c.class_id = cl.class_id
+JOIN
+    parent_info p ON c.parent_id = p.parent_id
+JOIN
+    admission_form adf ON adf.child_id = c.child_id
+JOIN 
+    parent_info p2 ON adf.additional_parent_id = p2.parent_id
+JOIN 
+    student_form_repository fr ON fr.child_id = c.child_id
+WHERE 
+    c.class_id = p_classId
+    AND fr.is_active = 1 
+GROUP BY 
+    c.child_id, 
+    c.child_first_name, 
+    c.child_last_name, 
+    cl.class_name, 
+    p.email, 
+    p2.email;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE `spGetAllFormBasedChildDetails`(
+    IN p_formId INT
+)
+BEGIN
+    SELECT 
+    c.child_id,
+    c.child_first_name, 
+    c.child_last_name, 
+    cl.class_name,
+    p.email AS primary_email,
+    p2.email AS additional_parent_email,
+    CASE
+        WHEN fr.form_status = 0 THEN 'Incomplete'
+        WHEN fr.form_status = 1 THEN 'Approval Pending'
+        WHEN fr.form_status = 2 THEN 'Completed'
+        ELSE 'Unknown Status'
+    END AS form_status
+FROM 
+    student_form_repository fr
+JOIN 
+	child_info c ON c.child_id = fr.child_id
+JOIN 
+    class_details cl ON c.class_id = cl.class_id
+JOIN
+    parent_info p ON c.parent_id = p.parent_id
+JOIN
+    admission_form adf ON adf.child_id = c.child_id
+JOIN 
+    parent_info p2 ON adf.additional_parent_id = p2.parent_id
+
+WHERE 
+    fr.form_id = p_formId
+    AND fr.is_active = 1 
+GROUP BY 
+    c.child_id, 
+    c.child_first_name, 
+    c.child_last_name, 
+    cl.class_name, 
+    p.email, 
+    p2.email;
+END //
+
+DELIMITER ;
+
+
+
+
+
