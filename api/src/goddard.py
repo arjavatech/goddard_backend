@@ -155,10 +155,10 @@ async def delete_admin_info(email_id: str):
 
 # ParentInvite Schema
 class ParentInvite(BaseModel):
-    invite_email: str
+    invite_email: Optional[str] = None
     parent_id: int
-    invite_id: str = None
-    time_stamp: str = None
+    invite_id: Optional[str] = None
+    time_stamp: Optional[str] = None
 
 
 # --------- ParentInvite Endpoints ---------
@@ -278,10 +278,10 @@ async def delete_parent_invite(email: str):
 
 # ChildInfo Schema
 class ChildInfo(BaseModel):
-    parent_id: str
+    parent_id: Optional[str] = None
     class_id: int
-    child_first_name: str
-    child_last_name: str
+    child_first_name: Optional[str] = None
+    child_last_name: Optional[str] = None
     dob: Optional[str] = None 
 
 # --------- ChildInfo Endpoints ---------
@@ -471,41 +471,37 @@ async def delete_child_info(child_id: int):
         if connection:
             connection.close()
 
-
-
 # ParentInvite Schema
 class ParentInviteClass(BaseModel):
-    parent_name: str
-    invite_email: str
-    child_fname: str
-    child_lname: str
-    child_classroom_id: int
-
-
+    parent_name: Optional[str] = None
+    invite_email: Optional[str] = None
+    child_fname: Optional[str] = None
+    child_lname: Optional[str] = None
+    child_classroom_id: Optional[int] = None
 
 # AllFormInfo Schema
 class AllFormInfo(BaseModel):
-    main_topic: str = None
-    sub_topic_one: str = None
-    sub_topic_two: str = None
-    sub_topic_three: str = None
-    sub_topic_four: str = None
-    sub_topic_five: str = None
-    sub_topic_six: str = None
-    sub_topic_seven: str = None
-    sub_topic_eight: str = None
-    sub_topic_nine: str = None
-    sub_topic_ten: str = None
-    sub_topic_eleven: str = None
-    sub_topic_twelve: str = None
-    sub_topic_thirteen: str = None
-    sub_topic_fourteen: str = None
-    sub_topic_fifteen: str = None
-    sub_topic_sixteen: str = None
-    sub_topic_seventeen: str = None
-    sub_topic_eighteen: str = None
-    form_type: str = None
-    form_status: str = None
+    main_topic: Optional[str] = None
+    sub_topic_one: Optional[str] = None
+    sub_topic_two: Optional[str] = None
+    sub_topic_three: Optional[str] = None
+    sub_topic_four: Optional[str] = None
+    sub_topic_five: Optional[str] = None
+    sub_topic_six: Optional[str] = None
+    sub_topic_seven: Optional[str] = None
+    sub_topic_eight: Optional[str] = None
+    sub_topic_nine: Optional[str] = None
+    sub_topic_ten: Optional[str] = None
+    sub_topic_eleven: Optional[str] = None
+    sub_topic_twelve: Optional[str] = None
+    sub_topic_thirteen: Optional[str] = None
+    sub_topic_fourteen: Optional[str] = None
+    sub_topic_fifteen: Optional[str] = None
+    sub_topic_sixteen: Optional[str] = None
+    sub_topic_seventeen: Optional[str] = None
+    sub_topic_eighteen: Optional[str] = None
+    form_type: Optional[str] = None
+    form_status: Optional[str] = None
 
 # --------- AllFormInfo Endpoints ---------
 
@@ -625,12 +621,6 @@ async def delete_form_info(form_id: int):
     finally:
         if connection:
             connection.close()
-
-
-
-
-
-
 
 
 # ParentInfo Schema
@@ -783,7 +773,7 @@ def delete_parent_info(id: int):
 
 # ClassDetails Schema
 class ClassDetails(BaseModel):
-    class_name: str
+    class_name: Optional[str] = None
 
 # --------- ClassDetails Endpoints ---------
 
@@ -893,13 +883,13 @@ async def delete_class(id: int):
 
 # CareProvider Schema
 class CareProvider(BaseModel):
-    name: str
-    telephone_number: str
-    hospital_affiliation: str = None
-    street_address: str = None
-    city_address: str = None
-    state_address: str = None
-    zip_address: str = None
+    name: Optional[str] = None
+    telephone_number: Optional[str] = None
+    hospital_affiliation: Optional[str] = None
+    street_address: Optional[str] = None
+    city_address: Optional[str] = None
+    state_address: Optional[str] = None
+    zip_address: Optional[str] = None
 
 # --------- CareProvider Endpoints ---------
 
@@ -1023,12 +1013,12 @@ async def delete_care_provider(id: int):
 
 # Dentist Schema
 class Dentist(BaseModel):
-    name: str
-    telephone_number: str
-    street_address: str
-    city_address: str
-    state_address: str
-    zip_address: str
+    name: Optional[str] = None
+    telephone_number: Optional[str] = None
+    street_address: Optional[str] = None
+    city_address: Optional[str] = None
+    state_address: Optional[str] = None
+    zip_address: Optional[str] = None
 
 # --------- Dentist Endpoints ---------
 
@@ -1148,17 +1138,15 @@ async def delete_dentist(id: int):
         if connection:
             connection.close()
 
-
-
 # EmergencyDetail Schema
 class EmergencyDetail(BaseModel):
-    contact_name: str
-    contact_relationship: str
-    street_address: str
-    city_address: str
-    state_address: str
-    zip_address: str
-    contact_telephone_number: str
+    contact_name: Optional[str] = None
+    contact_relationship: Optional[str] = None
+    street_address: Optional[str] = None
+    city_address: Optional[str] = None
+    state_address: Optional[str] = None
+    zip_address: Optional[str] = None
+    contact_telephone_number: Optional[str] = None
 
 # --------- EmergencyDetails Endpoints ---------
 
@@ -1504,8 +1492,8 @@ async def delete_class_form_repository(class_id: int, form_id: int):
 
 # AdmissionForm Schema
 class AdmissionFormCreate(BaseModel):
-    child_first_name: str
-    child_last_name: str
+    child_first_name: Optional[str] = None
+    child_last_name: Optional[str] = None
     nick_name: Optional[str] = None
     dob: Optional[str] = None  # You might want to use a date format like 'YYYY-MM-DD'
     primary_language: Optional[str] = None
@@ -1639,6 +1627,9 @@ class AdmissionForm(BaseModel):
     social_media_post: Optional[bool] = None
     parent_sign: Optional[str] = None
     admin_sign: Optional[str] = None
+    emergency_contact_first_id: Optional[int] = None
+    emergency_contact_second_id: Optional[int] = None
+    emergency_contact_third_id: Optional[int] = None
     
     
 
@@ -1654,7 +1645,7 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
         with connection.cursor() as cursor:
             sql = """
             CALL spCreateAdmissionForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
@@ -1710,7 +1701,7 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
                 admission_form.medical_transportation_waiver, admission_form.health_policies,
                 admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
                 admission_form.printed_social_media_post, admission_form.social_media_post,
-                admission_form.parent_sign, admission_form.admin_sign
+                admission_form.parent_sign, admission_form.admin_sign, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id
             ))
             connection.commit()
 
@@ -1773,7 +1764,7 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
         with connection.cursor() as cursor:
             sql = """
             CALL spUpdateAdmissionForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
@@ -1829,7 +1820,7 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
                 admission_form.medical_transportation_waiver, admission_form.health_policies,
                 admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
                 admission_form.printed_social_media_post, admission_form.social_media_post,
-                admission_form.parent_sign, admission_form.admin_sign
+                admission_form.parent_sign, admission_form.admin_sign, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id
             ))
             connection.commit()
             if(admission_form.admin_sign != None):
@@ -2888,6 +2879,15 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
             child_id = result['child_id']
             connection.commit()
 
+            form_sql = "CALL spGetDefaultForm();"
+            cursor.execute(form_sql)
+            default_form_result = cursor.fetchall()
+
+            form_set = set()
+            for form_detail in default_form_result:
+                form_set.add(form_detail["form_id"])
+
+
             class_form_get_sql = """
             CALL spGetClassFormRepositoryBasedClassID(%s);
             """
@@ -2895,24 +2895,27 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
             form_result = cursor.fetchall()
 
             for form_detail in form_result:
-                if(form_detail["form_id"] == 1):
+                form_set.add(form_detail["form_id"])
+
+            for form_id in form_set:
+                if(form_id == 1):
                     cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
                     connection.commit()
 
-                elif(form_detail["form_id"] == 2):
+                elif(form_id == 2):
                     cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
                     connection.commit()
-                elif(form_detail["form_id"] == 3):
+                elif(form_id == 3):
                     cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
                     connection.commit()
-                elif(form_detail["form_id"] == 4):
+                elif(form_id == 4):
                     cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
                     connection.commit()
 
                 student_form_create_sql = """
                 CALL spCreateStudentFormRepository(%s, %s, %s);
                 """
-                cursor.execute(student_form_create_sql, (child_id, form_detail["form_id"], 0))
+                cursor.execute(student_form_create_sql, (child_id, form_id, 0))
                 connection.commit()
 
             # Get the current UTC time
@@ -3464,6 +3467,133 @@ def get_form_based_child_count(form_id: int):
                 raise HTTPException(status_code=404, detail=f"No one entry is in the form id - {form_id}")
     except pymysql.MySQLError as err:
         print(f"Error fetching emergency detail: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.get("/child_all_details/fetch/{child_id}")
+async def fetch_child_details(child_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetStudentAllDetails(%s);"
+            cursor.execute(sql, (child_id,))
+            result = cursor.fetchone()
+            if result:
+                filtered_result = {key: value for key, value in result.items() if value is not None}
+                return filtered_result
+            else:
+                raise HTTPException(status_code=404, detail=f"Student info with id {child_id} not found")
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+class FormRepositary(BaseModel):
+    form_id: Optional[int] = None
+    form_name: Optional[str] = None
+    state: Optional[int] = None
+
+@app.post("/form/create")
+async def create_form(form: FormRepositary = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spInsertForm(%s, %s);"
+            cursor.execute(sql, (form.form_name, form.state))
+            connection.commit()
+            return {"message": "Form created successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.put("/form/update")
+async def update_form(form: FormRepositary = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateForm(%s, %s, %s);"
+            cursor.execute(sql, (form.form_id, form.form_name, form.state))
+            connection.commit()
+            return {"message": "Form updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.delete("/form/delete/{form_id}")
+async def delete_form(form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spDeleteForm(%s);"
+            cursor.execute(sql, (form_id,))
+            connection.commit()
+            return {"message": "Form deleted successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.get("/form/{form_id}")
+async def get_form(form_id: int):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetForm(%s);"
+            cursor.execute(sql, (form_id,))
+            result = cursor.fetchone()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+@app.get("/form/default")
+async def get_default_forms():
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to database"}
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetDefaultForm();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
