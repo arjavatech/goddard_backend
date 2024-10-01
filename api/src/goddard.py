@@ -3355,7 +3355,17 @@ async def fetch_child_details(child_id: int):
             cursor.execute(sql, (child_id,))
             result = cursor.fetchone()
             if result:
-                filtered_result = {key: value for key, value in result.items() if value is not None}
+                # Deserialize the JSON strings
+                filtered_result = {}
+                for key, value in result.items():
+                    if value is not None:
+                        try:
+                            # Try to load value as JSON if it's a valid JSON string
+                            filtered_result[key.split('.')[-1]] = json.loads(value)
+                        except (json.JSONDecodeError, TypeError):
+                            # If it's not a JSON string, keep the value as it is
+                            filtered_result[key.split('.')[-1]] = value
+
                 return filtered_result
             else:
                 raise HTTPException(status_code=404, detail=f"Student info with id {child_id} not found")
@@ -3385,10 +3395,10 @@ async def fetch_child_details(child_id: int):
                     if value is not None:
                         try:
                             # Try to load value as JSON if it's a valid JSON string
-                            filtered_result[key] = json.loads(value)
+                            filtered_result[key.split('.')[-1]] = json.loads(value)
                         except (json.JSONDecodeError, TypeError):
                             # If it's not a JSON string, keep the value as it is
-                            filtered_result[key] = value
+                            filtered_result[key.split('.')[-1]] = value
 
                 return filtered_result
             else:
