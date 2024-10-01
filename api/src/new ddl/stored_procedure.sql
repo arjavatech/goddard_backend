@@ -439,7 +439,7 @@ BEGIN
         child_emergency_contact_state_address, 
         child_emergency_contact_zip_address, 
         child_emergency_contact_telephone_number, 
-        child_emergency_contact_is_active
+        is_active
     )
     VALUES (
         p_child_emergency_contact_name, 
@@ -539,7 +539,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE spCreateParentInfoWithAllDetails(
+CREATE PROCEDURE `spCreateParentInfoWithAllDetails`(
     IN p_primary_parent_email VARCHAR(255),
     IN p_parent_name VARCHAR(255),
     IN p_parent_street_address VARCHAR(255),
@@ -549,7 +549,8 @@ CREATE PROCEDURE spCreateParentInfoWithAllDetails(
     IN p_home_telephone_number VARCHAR(20),
     IN p_home_cell_number VARCHAR(20),
     IN p_business_name VARCHAR(255),
-    IN p_work_hours VARCHAR(50),
+    IN p_work_hours_from VARCHAR(50),
+    IN p_work_hours_to VARCHAR(50),
     IN p_business_telephone_number VARCHAR(20),
     IN p_business_street_address VARCHAR(255),
     IN p_business_city_address VARCHAR(100),
@@ -569,7 +570,8 @@ BEGIN
         home_telephone_number, 
         home_cell_number, 
         business_name, 
-        work_hours, 
+        work_hours_from,
+        work_hours_to,
         business_telephone_number, 
         business_street_address, 
         business_city_address, 
@@ -589,7 +591,8 @@ BEGIN
         p_home_telephone_number, 
         p_home_cell_number, 
         p_business_name, 
-        p_work_hours, 
+        p_work_hours_from,
+        p_work_hours_to,
         p_business_telephone_number, 
         p_business_street_address, 
         p_business_city_address, 
@@ -600,7 +603,6 @@ BEGIN
         TRUE
     );
 END //
-
 DELIMITER ;
 
 DELIMITER //
@@ -1648,7 +1650,7 @@ CREATE PROCEDURE spUpdateEnrollmentForm(
 BEGIN
     UPDATE enrollment_form
     SET 
-        enrollment_name = COALESCE(p_enrollmentName, enrollment_name),
+        child_first_name = COALESCE(p_enrollmentName, child_first_name),
         point_one_field_three = COALESCE(p_pointOneFieldThree, point_one_field_three),
         point_two_initial_here = COALESCE(p_pointTwoInitialHere, point_two_initial_here),
         point_three_initial_here = COALESCE(p_pointThreeInitialHere, point_three_initial_here),
@@ -1667,8 +1669,8 @@ BEGIN
         point_sixteen_initial_here = COALESCE(p_pointSixteenInitialHere, point_sixteen_initial_here),
         point_seventeen_initial_here = COALESCE(p_pointSeventeenInitialHere, point_seventeen_initial_here),
         point_eighteen_initial_here = COALESCE(p_pointEighteenInitialHere, point_eighteen_initial_here),
-        start_date = COALESCE(p_preferredStartDate, start_date),
-        schedule_date = COALESCE(p_preferredSchedule, schedule_date),
+        preferred_start_date = COALESCE(p_preferredStartDate, preferred_start_date),
+        preferred_schedule = COALESCE(p_preferredSchedule, preferred_schedule),
         full_day = COALESCE(p_fullDay, full_day),
         half_day = COALESCE(p_halfDay, half_day),
         parent_sign_enroll = COALESCE(p_parentSignEnroll, parent_sign_enroll),
@@ -1772,9 +1774,7 @@ CREATE PROCEDURE spUpdateParentHandbook(
     IN p_addressing_individual_child_agreement BOOLEAN,
     IN p_finalword_agreement BOOLEAN,
     IN p_parent_sign_handbook VARCHAR(255),
-    IN p_admin_sign_handbook VARCHAR(255),
-    IN p_parent_sign_date_handbook DATE,
-    IN p_admin_sign_date_handbook DATE
+    IN p_admin_sign_handbook VARCHAR(255)
 )
 BEGIN
     UPDATE parent_handbook
@@ -1798,9 +1798,7 @@ BEGIN
         addressing_individual_child_agreement = COALESCE(p_addressing_individual_child_agreement, addressing_individual_child_agreement),
         finalword_agreement = COALESCE(p_finalword_agreement, finalword_agreement),
         parent_sign_handbook = COALESCE(p_parent_sign_handbook, parent_sign_handbook),
-        admin_sign_handbook = COALESCE(p_admin_sign_handbook, admin_sign_handbook),
-        parent_sign_date_handbook = COALESCE(p_parent_sign_date_handbook, parent_sign_date_handbook),
-        admin_sign_date_handbook = COALESCE(p_admin_sign_date_handbook, admin_sign_date_handbook)
+        admin_sign_handbook = COALESCE(p_admin_sign_handbook, admin_sign_handbook)
     WHERE 
         child_id = p_child_id AND is_active = TRUE;
 END //
@@ -1840,7 +1838,7 @@ BEGIN
         parent_state_address = COALESCE(p_state_address,parent_state_address),
         parent_zip_address = COALESCE(p_zip_address,parent_zip_address),
         home_telephone_number = COALESCE(p_home_telephone_number,home_telephone_number),
-        home_cellphone_number = COALESCE(p_home_cellphone_number,home_cellphone_number),
+        home_cell_number = COALESCE(p_home_cellphone_number,home_cell_number),
         business_name = COALESCE(p_business_name,business_name),
         work_hours_from = COALESCE(p_work_hours_from,work_hours_from),
         work_hours_to = COALESCE(p_work_hours_to,work_hours_to),
@@ -1853,7 +1851,6 @@ BEGIN
         password = COALESCE(p_password,password)
     WHERE parent_id = p_parent_id AND is_active = TRUE;
 END //
-
 DELIMITER ;
 
 DELIMITER //
@@ -2221,7 +2218,6 @@ DELIMITER ;
 
 DELIMITER //
 
-
 CREATE PROCEDURE spCreateAdmissionForm(
     IN p_child_id INT,
     IN p_additional_parent_id INT,
@@ -2349,7 +2345,8 @@ CREATE PROCEDURE spCreateAdmissionForm(
     IN p_emergency_contact_first_id INT,
     IN p_emergency_contact_second_id INT,
     IN p_emergency_contact_third_id INT,
-    IN p_pointer INT
+    IN p_pointer INT,
+    IN p_agree_all_above_info_is_correct BOOLEAN
 )
 BEGIN
     INSERT INTO admission_form (
@@ -2365,17 +2362,17 @@ BEGIN
         no_illnesses_for_this_child, age_group_friends, neighborhood_friends, relationship_with_mother, relationship_with_father, 
         relationship_with_siblings, relationship_with_extended_family, fears_conflicts, child_response_frustration, favorite_activities, 
         last_five_years_moved, things_used_at_home, hours_of_television_daily, language_used_at_home, changes_at_home_situation, 
-        educational_expectations_of_child, fam_his_instructions, do_you_agree_this_immunization_instructions, other_important_family_members, 
+        educational_expectations_of_child, fam_his_instructions, do_you_agree_this_immunization_instructions, important_fam_members, 
         about_family_celebrations, childcare_before, reason_for_childcare_before, what_child_interests, drop_off_time, pick_up_time, 
         restricted_diet, restricted_diet_reason, eat_own, eat_own_reason, favorite_foods, rest_in_the_middle_day, 
         reason_for_rest_in_the_middle_day, rest_routine, toilet_trained, reason_for_toilet_trained, explain_for_existing_illness_allergy, 
         existing_illness_allergy, functioning_at_age, explain_for_functioning_at_age, explain_for_able_to_walk, able_to_walk, 
         explain_for_communicate_their_needs, communicate_their_needs, any_medication, explain_for_any_medication, 
         utilize_special_equipment, explain_for_utilize_special_equipment, significant_periods, explain_for_significant_periods, desire_any_accommodations, 
-        explain_for_desire_any_accommodations, additional_information, child_info_is_correct, child_pick_up_password, pick_up_password_form, 
-        photo_video_permission_form, photo_permission_electronic, photo_permission_post, security_release_policy_form, 
-        med_technicians_med_transportation_waiver, medical_transportation_waiver, health_policies, parent_sign_outside_waiver, 
-        approve_social_media_post, printed_social_media_post, social_media_post, parent_sign_admission, admin_sign_admission, emergency_contact_first_id, emergency_contact_second_id, emergency_contact_third_id, pointer, is_active
+        explain_for_desire_any_accommodations, additional_information, do_you_agree_this, child_password_pick_up_password_form, do_you_agree_this_pick_up_password_form, 
+        photo_usage_photo_video_permission_form, photo_permission_agree_group_photos_electronic, do_you_agree_this_photo_video_permission_form, security_release_policy_form, 
+        med_technicians_med_transportation_waiver, medical_transportation_waiver, do_you_agree_this_health_policies, parent_sign_outside_waiver, 
+        approve_social_media_post, printed_name_social_media_post, do_you_agree_this_social_media_post, parent_sign_admission, admin_sign_admission, emergency_contact_first_id, emergency_contact_second_id, emergency_contact_third_id, pointer, agree_all_above_info_is_correct, is_active
     ) VALUES (
         p_child_id, p_additional_parent_id, p_care_provider_id, p_dentist_id, p_nick_name, p_primary_language, 
         p_school_age_child_school, p_custody_papers_apply, p_gender, p_special_diabilities, p_allergies_reaction, 
@@ -2401,12 +2398,14 @@ BEGIN
         p_child_info_is_correct, p_child_pick_up_password, p_pick_up_password_form, p_photo_video_permission_form, 
         p_photo_permission_electronic, p_photo_permission_post, p_security_release_policy_form, 
         p_med_technicians_med_transportation_waiver, p_medical_transportation_waiver, p_health_policies, p_parent_sign_outside_waiver, 
-        p_approve_social_media_post, p_printed_social_media_post, p_social_media_post, p_parent_sign, p_admin_sign, p_emergency_contact_first_id, p_emergency_contact_second_id, p_emergency_contact_third_id, p_pointer,TRUE
+        p_approve_social_media_post, p_printed_social_media_post, p_social_media_post, p_parent_sign, p_admin_sign, p_emergency_contact_first_id, p_emergency_contact_second_id, p_emergency_contact_third_id, p_pointer, p_agree_all_above_info_is_correct,TRUE
     );
 END //
 
 
 DELIMITER ;
+
+
 
 
 DELIMITER //
@@ -2538,7 +2537,8 @@ CREATE PROCEDURE spUpdateAdmissionForm(
     IN p_emergency_contact_first_id INT,
     IN p_emergency_contact_second_id INT,
     IN p_emergency_contact_third_id INT,
-    IN p_pointer INT
+    IN p_pointer INT,
+    IN p_agree_all_above_info_is_correct BOOLEAN
 )
 BEGIN
     UPDATE admission_form
@@ -2615,7 +2615,7 @@ BEGIN
         educational_expectations_of_child = COALESCE(p_educational_expectations_of_child,educational_expectations_of_child),
         fam_his_instructions =COALESCE(p_fam_his_instructions,fam_his_instructions),
         do_you_agree_this_immunization_instructions = COALESCE(p_immunization_instructions,do_you_agree_this_immunization_instructions),
-        other_important_family_members = COALESCE(p_important_fam_members,other_important_family_members),
+        important_fam_members = COALESCE(p_important_fam_members,important_fam_members),
         about_family_celebrations = COALESCE(p_fam_celebrations,about_family_celebrations),
         childcare_before = COALESCE(p_childcare_before,childcare_before),
         reason_for_childcare_before = COALESCE(p_reason_for_childcare_before,reason_for_childcare_before),
@@ -2647,28 +2647,29 @@ BEGIN
         significant_periods = COALESCE(p_significant_periods,significant_periods),
         explain_for_significant_periods = COALESCE(p_explain_significant_periods,explain_for_significant_periods),
         desire_any_accommodations = COALESCE(p_accommodations,desire_any_accommodations),
-        explain_for_accommodations = COALESCE(p_explain_for_accommodations,explain_for_accommodations),
-        explain_for_desire_any_accommodations = COALESCE(p_additional_information,explain_for_desire_any_accommodations),
-        child_info_is_correct = COALESCE(p_child_info_is_correct,child_info_is_correct),
-        child_pick_up_password = COALESCE(p_child_pick_up_password,child_pick_up_password),
-        pick_up_password_form = COALESCE(p_pick_up_password_form,pick_up_password_form),
-        photo_video_permission_form = COALESCE(p_photo_video_permission_form,photo_video_permission_form),
-        photo_permission_electronic = COALESCE(p_photo_permission_electronic,photo_permission_electronic),
-        photo_permission_post = COALESCE(p_photo_permission_post,photo_permission_post),
+        explain_for_desire_any_accommodations = COALESCE(p_explain_for_accommodations,explain_for_desire_any_accommodations),
+        additional_information = COALESCE(p_additional_information,additional_information),
+        do_you_agree_this = COALESCE(p_child_info_is_correct,do_you_agree_this),
+        do_you_agree_this_pick_up_password_form = COALESCE(p_child_pick_up_password,do_you_agree_this_pick_up_password_form),
+        child_password_pick_up_password_form = COALESCE(p_pick_up_password_form,child_password_pick_up_password_form),
+        photo_usage_photo_video_permission_form = COALESCE(p_photo_video_permission_form,photo_usage_photo_video_permission_form),
+        photo_permission_agree_group_photos_electronic = COALESCE(p_photo_permission_electronic,photo_permission_agree_group_photos_electronic),
+        do_you_agree_this_photo_video_permission_form = COALESCE(p_photo_permission_post,do_you_agree_this_photo_video_permission_form),
         security_release_policy_form = COALESCE(p_security_release_policy_form,security_release_policy_form),
         med_technicians_med_transportation_waiver = COALESCE(p_med_technicians_med_transportation_waiver,med_technicians_med_transportation_waiver),
         medical_transportation_waiver = COALESCE(p_medical_transportation_waiver,medical_transportation_waiver),
-        health_policies = COALESCE(p_health_policies,health_policies),
+        do_you_agree_this_health_policies = COALESCE(p_health_policies,do_you_agree_this_health_policies),
         parent_sign_outside_waiver = COALESCE(p_parent_sign_outside_waiver,parent_sign_outside_waiver),
         approve_social_media_post = COALESCE(p_approve_social_media_post,approve_social_media_post),
-        printed_social_media_post = COALESCE(p_printed_social_media_post,printed_social_media_post),
-        social_media_post = COALESCE(p_social_media_post,social_media_post),
+        printed_name_social_media_post = COALESCE(p_printed_social_media_post,printed_name_social_media_post),
+        do_you_agree_this_social_media_post = COALESCE(p_social_media_post,do_you_agree_this_social_media_post),
         parent_sign_admission = COALESCE(p_parent_sign,parent_sign_admission),
         admin_sign_admission = COALESCE(p_admin_sign,admin_sign_admission),
         emergency_contact_first_id = COALESCE(p_emergency_contact_first_id,emergency_contact_first_id),
         emergency_contact_second_id = COALESCE(p_emergency_contact_second_id,emergency_contact_second_id),
         emergency_contact_third_id = COALESCE(p_emergency_contact_third_id,emergency_contact_third_id),
-        pointer = COALESCE(p_pointer,pointer)
+        pointer = COALESCE(p_pointer,pointer),
+        agree_all_above_info_is_correct = COALESCE(p_agree_all_above_info_is_correct,agree_all_above_info_is_correct)
     WHERE 
         child_id = p_child_id AND is_active = TRUE;
 END //

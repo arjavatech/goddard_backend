@@ -151,8 +151,6 @@ async def delete_admin_info(email_id: str):
             connection.close()
 
 
-
-
 # ParentInvite Schema
 class ParentInvite(BaseModel):
     invite_email: Optional[str] = None
@@ -273,7 +271,6 @@ async def delete_parent_invite(email: str):
     finally:
         if connection:
             connection.close()
-
 
 
 # ChildInfo Schema
@@ -630,7 +627,7 @@ class ParentInfo(BaseModel):
     parent_state_address: Optional[str] = None
     parent_zip_address: Optional[str] = None
     home_telephone_number: Optional[str] = None
-    home_cellphone_number: Optional[str] = None
+    home_cell_number: Optional[str] = None
     business_name: Optional[str] = None
     work_hours_from: Optional[str] = None
     work_hours_to: Optional[str] = None
@@ -656,7 +653,7 @@ async def create_parent_info(parentinfo: ParentInfo = Body()):
             cursor.execute(sql, (
                 parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                 parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
-                parentinfo.home_cellphone_number, parentinfo.business_name, parentinfo.work_hours_from,
+                parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                 parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
                 parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
                 parentinfo.business_cell_number, parentinfo.password
@@ -735,7 +732,7 @@ def update_parent_info(id: int, parentinfo: ParentInfo = Body(...)):
             cursor.execute(sql, (
                 id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                 parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
-                parentinfo.home_cellphone_number, parentinfo.business_name, parentinfo.work_hours_from,
+                parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                 parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
                 parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
                 parentinfo.business_cell_number, parentinfo.password
@@ -765,9 +762,6 @@ def delete_parent_info(id: int):
         raise HTTPException(status_code=500, detail=f"MySQL Error: {err}")
     finally:
         connection.close()
-
-
-
 
 # ClassDetails Schema
 class ClassDetails(BaseModel):
@@ -875,9 +869,6 @@ async def delete_class(id: int):
     finally:
         if connection:
             connection.close()
-
-
-
 
 # CareProvider Schema
 class CareProvider(BaseModel):
@@ -1452,7 +1443,7 @@ class AdmissionForm(BaseModel):
     educational_expectations_of_child: Optional[str] = None
     fam_his_instructions: Optional[bool] = None
     do_you_agree_this_immunization_instructions: Optional[bool] = None
-    other_important_family_members: Optional[str] = None
+    important_fam_members: Optional[str] = None
     about_family_celebrations: Optional[str] = None
     childcare_before: Optional[bool] = None
     reason_for_childcare_before: Optional[str] = None
@@ -1486,28 +1477,27 @@ class AdmissionForm(BaseModel):
     desire_any_accommodations: Optional[bool] = None
     explain_for_desire_any_accommodations: Optional[str] = None
     additional_information: Optional[str] = None
-    child_info_is_correct: Optional[bool] = None
-    child_pick_up_password: Optional[str] = None
-    pick_up_password_form: Optional[bool] = None
-    photo_video_permission_form: Optional[str] = None
-    photo_permission_electronic: Optional[bool] = None
-    photo_permission_post: Optional[bool] = None
+    do_you_agree_this: Optional[bool] = None
+    child_password_pick_up_password_form: Optional[str] = None
+    do_you_agree_this_pick_up_password_form: Optional[bool] = None
+    photo_usage_photo_video_permission_form: Optional[str] = None
+    photo_permission_agree_group_photos_electronic: Optional[bool] = None
+    do_you_agree_this_photo_video_permission_form: Optional[bool] = None
     security_release_policy_form: Optional[bool] = None
     med_technicians_med_transportation_waiver: Optional[str] = None
     medical_transportation_waiver: Optional[bool] = None
-    health_policies: Optional[bool] = None
+    do_you_agree_this_health_policies: Optional[bool] = None
     parent_sign_admission_outside_waiver: Optional[bool] = None
     approve_social_media_post: Optional[bool] = None
-    printed_social_media_post: Optional[str] = None
-    social_media_post: Optional[bool] = None
+    printed_name_social_media_post: Optional[str] = None
+    do_you_agree_this_social_media_post: Optional[bool] = None
     parent_sign_admission: Optional[str] = None
     admin_sign_admission: Optional[str] = None
     emergency_contact_first_id: Optional[int] = None
     emergency_contact_second_id: Optional[int] = None
     emergency_contact_third_id: Optional[int] = None
-    pointer:Optional[int] = None
-  
-    
+    pointer:Optional[int] = None 
+    agree_all_above_info_is_correct: Optional[bool] = None  
 
 # --------- AdmissionForm Endpoints ---------
 
@@ -1521,7 +1511,7 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
         with connection.cursor() as cursor:
             sql = """
             CALL spCreateAdmissionForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
@@ -1555,7 +1545,7 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
                 admission_form.hours_of_television_daily, admission_form.language_used_at_home,
                 admission_form.changes_at_home_situation, admission_form.educational_expectations_of_child,
                 admission_form.fam_his_instructions, admission_form.do_you_agree_this_immunization_instructions,
-                admission_form.other_important_family_members, admission_form.about_family_celebrations,
+                admission_form.important_fam_members, admission_form.about_family_celebrations,
                 admission_form.childcare_before, admission_form.reason_for_childcare_before,
                 admission_form.what_child_interests, admission_form.drop_off_time, admission_form.pick_up_time,
                 admission_form.restricted_diet, admission_form.restricted_diet_reason, admission_form.eat_own,
@@ -1570,14 +1560,14 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
                 admission_form.explain_for_utilize_special_equipment, admission_form.significant_periods,
                 admission_form.explain_for_significant_periods, admission_form.desire_any_accommodations,
                 admission_form.explain_for_desire_any_accommodations, admission_form.additional_information,
-                admission_form.child_info_is_correct, admission_form.child_pick_up_password,
-                admission_form.pick_up_password_form, admission_form.photo_video_permission_form,
-                admission_form.photo_permission_electronic, admission_form.photo_permission_post,
+                admission_form.do_you_agree_this, admission_form.child_password_pick_up_password_form,
+                admission_form.do_you_agree_this_pick_up_password_form, admission_form.photo_usage_photo_video_permission_form,
+                admission_form.photo_permission_agree_group_photos_electronic, admission_form.do_you_agree_this_photo_video_permission_form,
                 admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
-                admission_form.medical_transportation_waiver, admission_form.health_policies,
+                admission_form.medical_transportation_waiver, admission_form.do_you_agree_this_health_policies,
                 admission_form.parent_sign_admission_outside_waiver, admission_form.approve_social_media_post,
-                admission_form.printed_social_media_post, admission_form.social_media_post,
-                admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer
+                admission_form.printed_name_social_media_post, admission_form.do_you_agree_this_social_media_post,
+                admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer, admission_form.agree_all_above_info_is_correct
             ))
             connection.commit()
 
@@ -1640,7 +1630,7 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
         with connection.cursor() as cursor:
             sql = """
             CALL spUpdateAdmissionForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
@@ -1674,7 +1664,7 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
                 admission_form.hours_of_television_daily, admission_form.language_used_at_home,
                 admission_form.changes_at_home_situation, admission_form.educational_expectations_of_child,
                 admission_form.fam_his_instructions, admission_form.do_you_agree_this_immunization_instructions,
-                admission_form.other_important_family_members, admission_form.about_family_celebrations,
+                admission_form.important_fam_members, admission_form.about_family_celebrations,
                 admission_form.childcare_before, admission_form.reason_for_childcare_before,
                 admission_form.what_child_interests, admission_form.drop_off_time, admission_form.pick_up_time,
                 admission_form.restricted_diet, admission_form.restricted_diet_reason, admission_form.eat_own,
@@ -1689,14 +1679,14 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
                 admission_form.explain_for_utilize_special_equipment, admission_form.significant_periods,
                 admission_form.explain_for_significant_periods, admission_form.desire_any_accommodations,
                 admission_form.explain_for_desire_any_accommodations, admission_form.additional_information,
-                admission_form.child_info_is_correct, admission_form.child_pick_up_password,
-                admission_form.pick_up_password_form, admission_form.photo_video_permission_form,
-                admission_form.photo_permission_electronic, admission_form.photo_permission_post,
+                admission_form.do_you_agree_this, admission_form.child_password_pick_up_password_form,
+                admission_form.do_you_agree_this_pick_up_password_form, admission_form.photo_usage_photo_video_permission_form,
+                admission_form.photo_permission_agree_group_photos_electronic, admission_form.do_you_agree_this_photo_video_permission_form,
                 admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
-                admission_form.medical_transportation_waiver, admission_form.health_policies,
+                admission_form.medical_transportation_waiver, admission_form.do_you_agree_this_health_policies,
                 admission_form.parent_sign_admission_outside_waiver, admission_form.approve_social_media_post,
-                admission_form.printed_social_media_post, admission_form.social_media_post,
-                admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer
+                admission_form.printed_name_social_media_post, admission_form.do_you_agree_this_social_media_post,
+                admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer, admission_form.agree_all_above_info_is_correct
             ))
             connection.commit()
             if(admission_form.admin_sign_admission != None):
@@ -1741,11 +1731,11 @@ async def delete_admission_form(child_id: int):
 # AuthorizationForm Schema
 class AuthorizationForm(BaseModel):
     child_id: int
-    bank_routing_ach: Optional[str] = None
-    bank_account_ach: Optional[str] = None
-    driver_license_ach: Optional[str] = None
-    state_ach: Optional[str] = None
-    i_ach: Optional[str] = None
+    bank_routing: Optional[str] = None
+    bank_account: Optional[str] = None
+    driver_license: Optional[str] = None
+    state: Optional[str] = None
+    i: Optional[str] = None
     parent_sign_ach: Optional[str] = None
     admin_sign_ach: Optional[str] = None
 
@@ -1766,8 +1756,8 @@ async def create_authorization_form(form: AuthorizationForm = Body(...)):
             );
             """
             cursor.execute(sql, (
-                form.child_id, form.bank_routing_ach, form.bank_account_ach, form.driver_license_ach,
-                form.state_ach, form.i_ach, form.parent_sign_ach, form.admin_sign_ach
+                form.child_id, form.bank_routing, form.bank_account, form.driver_license,
+                form.state, form.i, form.parent_sign_ach, form.admin_sign_ach
             ))
             connection.commit()
 
@@ -1834,18 +1824,18 @@ async def update_authorization_form(id: int, form: AuthorizationForm = Body(...)
             );
             """
             cursor.execute(sql, (
-                form.child_id, form.bank_routing_ach, form.bank_account_ach, form.driver_license_ach,
-                form.state_ach, form.i_ach, form.parent_sign_ach, form.admin_sign_ach
+                id, form.bank_routing, form.bank_account, form.driver_license,
+                form.state, form.i, form.parent_sign_ach, form.admin_sign_ach
             ))
             connection.commit()
-            if(form.admin_sign != None):
+            if(form.admin_sign_ach != None):
                 auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (form.child_id, 2, 2, 2))
+                cursor.execute(auth_form_sql, (id, 2, 2, 2))
                 connection.commit()
 
-            elif(form.parent_sign != None):
+            elif(form.parent_sign_ach != None):
                 auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (form.child_id, 2, 2, 1))
+                cursor.execute(auth_form_sql, (id, 2, 2, 1))
                 connection.commit()
 
 
@@ -1882,7 +1872,7 @@ async def delete_authorization_form(id: int):
 # EnrollmentForm Schema
 class EnrollmentForm(BaseModel):
     child_id: int
-    enrollment_name: Optional[str] = None
+    child_first_name: Optional[str] = None
     point_one_field_three: Optional[str] = None
     point_two_initial_here: Optional[str] = None
     point_three_initial_here: Optional[str] = None
@@ -1924,7 +1914,7 @@ async def create_enrollment(enrollment: EnrollmentForm = Body(...)):
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );"""
             cursor.execute(sql, (
-                enrollment.child_id, enrollment.enrollment_name, enrollment.point_one_field_three, enrollment.point_two_initial_here,
+                enrollment.child_id, enrollment.child_first_name, enrollment.point_one_field_three, enrollment.point_two_initial_here,
                 enrollment.point_three_initial_here, enrollment.point_four_initial_here, enrollment.point_five_initial_here, enrollment.point_six_initial_here,
                 enrollment.point_seven_initial_here, enrollment.point_eight_initial_here, enrollment.point_nine_initial_here, enrollment.point_ten_initial_here,
                 enrollment.point_eleven_initial_here, enrollment.point_twelve_initial_here, enrollment.point_thirteen_initial_here, enrollment.point_fourteen_initial_here,
@@ -1995,7 +1985,7 @@ async def update_enrollment(id: int, enrollment: EnrollmentForm = Body(...)):
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );"""
             cursor.execute(sql, (
-                enrollment.child_id, enrollment.enrollment_name, enrollment.point_one_field_three, enrollment.point_two_initial_here,
+                enrollment.child_id, enrollment.child_first_name, enrollment.point_one_field_three, enrollment.point_two_initial_here,
                 enrollment.point_three_initial_here, enrollment.point_four_initial_here, enrollment.point_five_initial_here, enrollment.point_six_initial_here,
                 enrollment.point_seven_initial_here, enrollment.point_eight_initial_here, enrollment.point_nine_initial_here, enrollment.point_ten_initial_here,
                 enrollment.point_eleven_initial_here, enrollment.point_twelve_initial_here, enrollment.point_thirteen_initial_here, enrollment.point_fourteen_initial_here,
@@ -2005,12 +1995,12 @@ async def update_enrollment(id: int, enrollment: EnrollmentForm = Body(...)):
             ))
             connection.commit()
 
-            if(enrollment.admin_sign != None):
+            if(enrollment.admin_sign_enroll != None):
                 auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
                 cursor.execute(auth_form_sql, (enrollment.child_id, 4, 4, 2))
                 connection.commit()
                 
-            elif(enrollment.parent_sign != None):
+            elif(enrollment.parent_sign_enroll != None):
                 auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
                 cursor.execute(auth_form_sql, (enrollment.child_id, 4, 4, 1))
                 connection.commit()
@@ -2195,12 +2185,12 @@ async def update_parent_handbook(child_id: int, parent_handbook: ParentHandbook 
             ))
             connection.commit()
 
-            if(parent_handbook.admin_sign != None):
+            if(parent_handbook.admin_sign_handbook != None):
                 auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
                 cursor.execute(auth_form_sql, (parent_handbook.child_id, 3, 3, 2))
                 connection.commit()
 
-            elif(parent_handbook.parent_sign != None):
+            elif(parent_handbook.parent_sign_handbook != None):
                 auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
                 cursor.execute(auth_form_sql, (parent_handbook.child_id, 3, 3, 1))
                 connection.commit()
