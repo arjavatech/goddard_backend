@@ -3003,8 +3003,6 @@ async def get_all_invite_status():
             connection.close()
 
 
-
-
 @app.get("/parent_invite_info/all")
 async def get_parent_invites():
     connection = connect_to_database()
