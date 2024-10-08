@@ -4,7 +4,7 @@ import json
 from fastapi import APIRouter, Body, FastAPI, HTTPException, Path
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional, Union
+from typing import List, Optional, Union
 import pymysql
 import mangum
 import yagmail
@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_credentials = True, allow_methods=["*"], allow_headers=["*"]
+    CORSMiddleware, allow_origins=["*", "https://arjavatech.github.io/"], allow_credentials = True, allow_methods=["*", "https://arjavatech.github.io/"], allow_headers=["*", "https://arjavatech.github.io/"]
 )
 
 
@@ -158,7 +158,6 @@ class ParentInvite(BaseModel):
     invite_id: Optional[str] = None
     time_stamp: Optional[str] = None
 
-
 # --------- ParentInvite Endpoints ---------
 
 @app.post("/parent_invite_info/create")
@@ -272,7 +271,6 @@ async def delete_parent_invite(email: str):
         if connection:
             connection.close()
 
-
 # ChildInfo Schema
 class ChildInfo(BaseModel):
     parent_id: Optional[str] = None
@@ -300,7 +298,8 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
                 childinfo.class_id, 
                 childinfo.child_first_name, 
                 childinfo.child_last_name, 
-                childinfo.dob
+                childinfo.dob,
+                None
             ))
             
             # Retrieve the child_id from the output variable
@@ -309,9 +308,44 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
             child_id = result['child_id']
             connection.commit()
 
-            # # Insert into other forms using the child_id
-            # insert_into_other_forms(child_id)
+            form_sql = "CALL spGetDefaultForm();"
+            cursor.execute(form_sql)
+            default_form_result = cursor.fetchall()
 
+            form_set = set()
+            for form_detail in default_form_result:
+                form_set.add(form_detail["form_id"])
+
+
+            class_form_get_sql = """
+            CALL spGetClassFormRepositoryBasedClassID(%s);
+            """
+            cursor.execute(class_form_get_sql, childinfo.child_classroom_id)
+            form_result = cursor.fetchall()
+
+            for form_detail in form_result:
+                form_set.add(form_detail["form_id"])
+
+            for form_id in form_set:
+                if(form_id == 1):
+                    cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
+                    connection.commit()
+
+                elif(form_id == 2):
+                    cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
+                    connection.commit()
+                elif(form_id == 3):
+                    cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
+                    connection.commit()
+                elif(form_id == 4):
+                    cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
+                    connection.commit()
+
+                student_form_create_sql = """
+                CALL spCreateStudentFormRepository(%s, %s, %s);
+                """
+                cursor.execute(student_form_create_sql, (child_id, form_id, 0))
+                connection.commit()
             return {"message": "Child information created successfully", "child_id": child_id}
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
@@ -319,8 +353,6 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
     finally:
         if connection:
             connection.close()
-
-
 
 def insert_into_other_forms(child_id):
     connection = connect_to_database()
@@ -2428,7 +2460,7 @@ async def get_enrollment_form_status(id: int):
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"Enrollment form with id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching Enrollment Info form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2450,7 +2482,7 @@ async def get_parent_handbook_status(id: int):
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"Parent Handbook with id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching Parent Handbook form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2483,7 +2515,7 @@ async def get_personal_info_all_incomplete_form_status(id: int):
                     "InCompletedFormStatus": incomplete_form_list
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"InCompletedFormStatus for the child id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching authorization form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2519,7 +2551,7 @@ async def get_personal_info_all_complete_form_status(id: int):
                     "CompletedFormStatus": incomplete_form_list
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"CompletedFormStatus for the child id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching authorization form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2559,7 +2591,7 @@ async def get_personal_info_all__form_status(id: int):
                     "Approval Pending Forms": pending_form_list
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"Child id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching authorization form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2594,7 +2626,7 @@ async def get_parent_all__child(id: str):
                         "parent_name": parent
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"Parent email with id {id} not found")
     except pymysql.MySQLError as err:
         print(f"Error fetching authorization form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2641,9 +2673,9 @@ async def get_personal_info_all_complete_form_status_based_on_year(id: int, year
                     "CompletedFormStatus": completed_form_list
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"Authorization form with id {id} not found")
+                raise HTTPException(status_code=404, detail=f"Child id {id} not found")
     except pymysql.MySQLError as err:
-        print(f"Error fetching authorization form: {err}")
+        print(f"Error fetching completed_form_status_year based form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
@@ -3484,7 +3516,7 @@ async def get_form(form_id: int):
         if connection:
             connection.close()
 
-@app.get("/form/default")
+@app.get("/default_forms")
 async def get_default_forms():
     connection = connect_to_database()
     if not connection:
@@ -3590,5 +3622,56 @@ async def update_parent_password(login_info = Body(...)):
         if connection:
             connection.close()
 
+class FormIds(BaseModel):
+    key: List[int]
 
+@app.put("/update/multiple_form_status")
+async def update_form_status(form_ids: FormIds):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to the database"}
+
+    # Convert the list of form IDs into a comma-separated string
+    form_ids_str = ",".join([str(f_id) for f_id in form_ids.key])
+
+    try:
+        with connection.cursor() as cursor:
+            # Call the stored procedure
+            sql = "CALL spUpdateMultipleFormStatus(%s);"
+            cursor.execute(sql, (form_ids_str,))
+            connection.commit()
+            return {"message": "Form statuses updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+class ClassIds(BaseModel):
+    key: List[int]
+
+@app.get("/filter_childs_based_on_multiple_class")
+async def get_children_by_class(class_ids: ClassIds):
+    connection = connect_to_database()
+    if not connection:
+        return {"error": "Failed to connect to the database"}
+
+    # Convert the list of class IDs into a comma-separated string
+    class_ids_str = ",".join([str(class_id) for class_id in class_ids.key])
+
+    try:
+        with connection.cursor() as cursor:
+            # Call the stored procedure
+            sql = "CALL spGetChildDetailsBasedOnMultipleClasses(%s);"
+            cursor.execute(sql, (class_ids_str,))
+            result = cursor.fetchall()  # Fetch all matching rows
+            return {"children": result}  # Return the children data
+    except pymysql.MySQLError as err:
+        print(f"Error calling stored procedure: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+            
 handler=mangum.Mangum(app)
