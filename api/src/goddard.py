@@ -273,11 +273,10 @@ async def delete_parent_invite(email: str):
 
 # ChildInfo Schema
 class ChildInfo(BaseModel):
-    parent_id: Optional[str] = None
+    parent_id: Optional[int] = None
     class_id: int
     child_first_name: Optional[str] = None
     child_last_name: Optional[str] = None
-    dob: Optional[str] = None 
 
 # --------- ChildInfo Endpoints ---------
 
@@ -291,15 +290,13 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
         with connection.cursor() as cursor:
             child_id = None
             sql = """
-            CALL spCreateChildInfo(%s, %s, %s, %s, %s, @child_id);
+            CALL spCreateChildInfo(%s, %s, %s, %s, @child_id);
             """
             cursor.execute(sql, (
                 childinfo.parent_id, 
                 childinfo.class_id, 
                 childinfo.child_first_name, 
-                childinfo.child_last_name, 
-                childinfo.dob,
-                None
+                childinfo.child_last_name
             ))
             
             # Retrieve the child_id from the output variable
@@ -320,7 +317,7 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
             class_form_get_sql = """
             CALL spGetClassFormRepositoryBasedClassID(%s);
             """
-            cursor.execute(class_form_get_sql, childinfo.child_classroom_id)
+            cursor.execute(class_form_get_sql, childinfo.class_id)
             form_result = cursor.fetchall()
 
             for form_detail in form_result:
@@ -349,7 +346,7 @@ async def create_child_info(childinfo: ChildInfo = Body(...)):
             return {"message": "Child information created successfully", "child_id": child_id}
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        return {"error": "child info creation failed!!!!"}
     finally:
         if connection:
             connection.close()
@@ -433,15 +430,14 @@ async def update_child_info(child_id: int, childinfo: ChildInfo = Body(...)):
     try:
         with connection.cursor() as cursor:
             sql = """
-            CALL spUpdateChildInfo(%s, %s, %s, %s, %s, %s);
+            CALL spUpdateChildInfo(%s, %s, %s, %s, %s);
             """
             cursor.execute(sql, (
                 child_id, 
                 childinfo.parent_id, 
                 childinfo.class_id, 
                 childinfo.child_first_name, 
-                childinfo.child_last_name, 
-                childinfo.dob
+                childinfo.child_last_name
             ))
             connection.commit()
 
@@ -1161,6 +1157,7 @@ async def delete_dentist(id: int):
 
 # EmergencyDetail Schema
 class EmergencyDetail(BaseModel):
+    child_emergency_contact_id: Optional[int] = None
     child_emergency_contact_name: Optional[str] = None
     child_emergency_contact_relationship: Optional[str] = None
     child_emergency_contact_full_address: Optional[str] = None
@@ -1406,6 +1403,7 @@ class AdmissionForm(BaseModel):
     additional_parent_id: Optional[int] = None
     care_provider_id:  Optional[int]  = None
     dentist_id:  Optional[int]  = None
+    dob:  Optional[date]  = None
     nick_name: Optional[str] = None
     primary_language: Optional[str] = None
     school_age_child_school: Optional[str] = None
@@ -1497,7 +1495,7 @@ class AdmissionForm(BaseModel):
     functioning_at_age: Optional[bool] = None
     explain_for_functioning_at_age: Optional[str] = None
     explain_able_to_walk: Optional[bool] = None
-    able_to_walk: Optional[str] = None
+    able_to_walk: Optional[bool] = None
     explain_communicate_their_needs: Optional[bool] = None
     communicate_their_needs: Optional[str] = None
     any_medication: Optional[bool] = None
@@ -1543,12 +1541,12 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
         with connection.cursor() as cursor:
             sql = """
             CALL spCreateAdmissionForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
                 admission_form.child_id, admission_form.additional_parent_id, admission_form.care_provider_id,
-                admission_form.dentist_id, admission_form.nick_name, admission_form.primary_language,
+                admission_form.dentist_id, admission_form.dob, admission_form.nick_name, admission_form.primary_language,
                 admission_form.school_age_child_school, admission_form.do_relevant_custody_papers_apply, admission_form.gender,
                 admission_form.special_diabilities, admission_form.allergies_medication_reaction, admission_form.additional_info,
                 admission_form.medication, admission_form.health_insurance, admission_form.policy_number,
@@ -1662,12 +1660,12 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
         with connection.cursor() as cursor:
             sql = """
             CALL spUpdateAdmissionForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
             """
             cursor.execute(sql, (
                 child_id, admission_form.additional_parent_id, admission_form.care_provider_id,
-                admission_form.dentist_id, admission_form.nick_name, admission_form.primary_language,
+                admission_form.dentist_id, admission_form.dob, admission_form.nick_name, admission_form.primary_language,
                 admission_form.school_age_child_school, admission_form.do_relevant_custody_papers_apply, admission_form.gender,
                 admission_form.special_diabilities, admission_form.allergies_medication_reaction, admission_form.additional_info,
                 admission_form.medication, admission_form.health_insurance, admission_form.policy_number,
@@ -2546,14 +2544,13 @@ async def get_personal_info_all_complete_form_status(id: int):
                         cursor.execute(time_stamp_get_sql, id)
                         time_stamp_detail = cursor.fetchone()
                         
-                        incomplete_form_list.append({"formname" : form_detail["main_topic"], "completedTimestamp": time_stamp_detail["admin_date"]})
+                        incomplete_form_list.append({"formname" : form_detail["main_topic"], "completedTimestamp": time_stamp_detail["admin_sign_date_admission"]})
                 return {
                     "CompletedFormStatus": incomplete_form_list
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"CompletedFormStatus for the child id {id} not found")
+                return []
     except pymysql.MySQLError as err:
-        print(f"Error fetching authorization form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
@@ -2755,14 +2752,13 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
 
             # Call another stored procedure for child info
             child_table_sql = """
-            CALL spCreateChildInfo(%s, %s, %s, %s, %s, @child_id);
+            CALL spCreateChildInfo(%s, %s, %s, %s, @child_id);
             """
             cursor.execute(child_table_sql, (
                 parent_id, 
                 parent_invite.child_classroom_id, 
                 parent_invite.child_fname, 
-                parent_invite.child_lname,  
-                None
+                parent_invite.child_lname
             ))
             
             # Retrieve the child_id from the output variable
@@ -2851,8 +2847,7 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
             return {"message": "Parent invite created and Email sent successfully!"}
 
     except pymysql.MySQLError as err:
-        print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        return {"error": f"Parent invite mail with id {parent_invite.invite_email} is already exists!!!"}
     finally:
         if connection:
             connection.close()
@@ -2942,8 +2937,7 @@ async def parent_invite_create(invite_email: str):
     finally:
         if connection:
             connection.close()
-
-
+    
 @app.post("/sign_up/create")
 async def sign_up_create(sign_up_data: dict = Body(...)):
     connection = connect_to_database()
@@ -2952,23 +2946,37 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            
             invite_id = sign_up_data.get("invite_id")
             email = sign_up_data.get("email")
             password = sign_up_data.get("password")
-            sql = "CALL spGetParentIdInInviteTable(%s);"
-            cursor.execute(sql, (invite_id,))
-            result = cursor.fetchone()
-            print(result)
+
+            mail_list_get_sql = "CALL spGetAllSignUpAndInviteEmails();"
+            cursor.execute(mail_list_get_sql, )
+            result = cursor.fetchall()
+
+            mail_list = []
             
             if result:
-                parent_id = result['parent_id']
-                password_update_sql = "CALL spUpdateParentInfoPassword(%s, %s, %s);"
-                cursor.execute(password_update_sql, (parent_id,email, password))
-                connection.commit()
-
-                return {"message": "SignUp Data successfully updated"}
+                for data in result:
+                  mail_list.append(data["parent_email"])
+            if email in mail_list:
+                return {"error": f"signup_id {email} Already Registered"}
             else:
-                raise HTTPException(status_code=404, detail=f"signup_id {invite_id} is not found")
+
+                sql = "CALL spGetParentIdInInviteTable(%s);"
+                cursor.execute(sql, (invite_id,))
+                result = cursor.fetchone()
+                
+                if result:
+                    parent_id = result['parent_id']
+                    password_update_sql = "CALL spUpdateParentInfoPassword(%s, %s, %s);"
+                    cursor.execute(password_update_sql, (parent_id,email, password))
+                    connection.commit()
+
+                    return {"message": "SignUp Data successfully updated"}
+                else:
+                    return {"error" : f"signup_id {invite_id} is not found"}
     except pymysql.MySQLError as err:
         print(f"Error fetching signup_info: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -3332,9 +3340,8 @@ def get_class_based_child_count(class_id: int):
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"No one entry in the class id - {class_id}")
+                return []
     except pymysql.MySQLError as err:
-        print(f"Error fetching emergency detail: {err}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         if connection:
@@ -3431,6 +3438,330 @@ async def fetch_child_details(child_id: int):
     finally:
         if connection:
             connection.close()
+
+
+# AdmissionFormUpdate Schema
+class AdmissionFormUpdate(BaseModel):
+    child_id: int
+    parent_id: Optional[int] = None
+    class_id: int
+    child_first_name: Optional[str] = None
+    child_last_name: Optional[str] = None
+    primary_parent_info: Optional[ParentInfo] = None
+    additional_parent_id: Optional[int] = None
+    additional_parent_info: Optional[ParentInfo] = None
+    child_care_provider_id:  Optional[int]  = None
+    child_care_provider_info:  Optional[CareProvider]  = None
+    child_dentist_id:  Optional[int]  = None
+    child_dentist_info:  Optional[Dentist]  = None
+    dob:  Optional[date]  = None
+    nick_name: Optional[str] = None
+    primary_language: Optional[str] = None
+    school_age_child_school: Optional[str] = None
+    do_relevant_custody_papers_apply: Optional[bool] = None
+    gender: Optional[str] = None
+    special_diabilities: Optional[str] = None
+    allergies_medication_reaction: Optional[str] = None
+    additional_info: Optional[str] = None
+    medication: Optional[str] = None
+    health_insurance: Optional[str] = None
+    policy_number: Optional[str] = None
+    obtaining_emergency_medical_care: Optional[str] = None
+    administration_first_aid_procedures: Optional[str] = None
+    agree_all_above_information_is_correct: Optional[bool] = None
+    physical_exam_last_date: Optional[date] = None
+    dental_exam_last_date: Optional[date] = None
+    allergies: Optional[str] = None
+    asthma: Optional[str] = None
+    bleeding_problems: Optional[str] = None
+    diabetes: Optional[str] = None
+    epilepsy: Optional[str] = None
+    frequent_ear_infections: Optional[str] = None
+    frequent_illnesses: Optional[str] = None
+    hearing_problems: Optional[str] = None
+    high_fevers: Optional[str] = None
+    hospitalization: Optional[str] = None
+    rheumatic_fever: Optional[str] = None
+    seizures_convulsions: Optional[str] = None
+    serious_injuries_accidents: Optional[str] = None
+    surgeries: Optional[str] = None
+    vision_problems: Optional[str] = None
+    medical_other: Optional[str] = None
+    illness_during_pregnancy: Optional[str] = None
+    condition_of_newborn: Optional[str] = None
+    duration_of_pregnancy: Optional[str] = None
+    birth_weight_lbs: Optional[str] = None
+    birth_weight_oz: Optional[str] = None
+    complications: Optional[str] = None
+    bottle_fed: Optional[str] = None
+    breast_fed: Optional[str] = None
+    other_siblings_name: Optional[str] = None
+    other_siblings_age: Optional[str] = None
+    family_history_allergies: Optional[bool] = None
+    family_history_heart_problems: Optional[bool] = None
+    family_history_tuberculosis: Optional[bool] = None
+    family_history_asthma: Optional[bool] = None
+    family_history_high_blood_pressure: Optional[bool] = None
+    family_history_vision_problems: Optional[bool] = None
+    family_history_diabetes: Optional[bool] = None
+    family_history_hyperactivity: Optional[bool] = None
+    family_history_epilepsy: Optional[bool] = None
+    no_illnesses_for_this_child: Optional[bool] = None
+    age_group_friends: Optional[str] = None
+    neighborhood_friends: Optional[str] = None
+    relationship_with_mother: Optional[str] = None
+    relationship_with_father: Optional[str] = None
+    relationship_with_siblings: Optional[str] = None
+    relationship_with_extended_family: Optional[str] = None
+    fears_conflicts: Optional[str] = None
+    child_response_frustration: Optional[str] = None
+    favorite_activities: Optional[str] = None
+    last_five_years_moved: Optional[bool] = None
+    things_used_at_home: Optional[str] = None
+    hours_of_television_daily: Optional[str] = None
+    language_used_at_home: Optional[str] = None
+    changes_at_home_situation: Optional[bool] = None
+    educational_expectations_of_child: Optional[str] = None
+    fam_his_instructions: Optional[bool] = None
+    do_you_agree_this_immunization_instructions: Optional[bool] = None
+    important_fam_members: Optional[str] = None
+    about_family_celebrations: Optional[str] = None
+    childcare_before: Optional[bool] = None
+    reason_for_childcare_before: Optional[str] = None
+    what_child_interests: Optional[str] = None
+    drop_off_time: Optional[str] = None
+    pick_up_time: Optional[str] = None
+    restricted_diet: Optional[bool] = None
+    restricted_diet_reason: Optional[str] = None
+    eat_own: Optional[bool] = None
+    eat_own_reason: Optional[str] = None
+    favorite_foods: Optional[str] = None
+    rest_in_the_middle_day: Optional[bool] = None
+    reason_for_rest_in_the_middle_day: Optional[str] = None
+    rest_routine: Optional[str] = None
+    toilet_trained: Optional[bool] = None
+    reason_for_toilet_trained: Optional[str] = None
+    explain_for_existing_illness_allergy: Optional[bool] = None
+    existing_illness_allergy: Optional[str] = None
+    functioning_at_age: Optional[bool] = None
+    explain_for_functioning_at_age: Optional[str] = None
+    explain_able_to_walk: Optional[bool] = None
+    able_to_walk: Optional[bool] = None
+    explain_communicate_their_needs: Optional[bool] = None
+    communicate_their_needs: Optional[bool] = None
+    any_medication: Optional[bool] = None
+    explain_for_any_medication: Optional[str] = None
+    utilize_special_equipment: Optional[bool] = None
+    explain_for_utilize_special_equipment: Optional[str] = None
+    significant_periods: Optional[bool] = None
+    explain_for_significant_periods: Optional[str] = None
+    desire_any_accommodations: Optional[bool] = None
+    explain_for_desire_any_accommodations: Optional[str] = None
+    additional_information: Optional[str] = None
+    do_you_agree_this: Optional[bool] = None
+    child_password_pick_up_password_form: Optional[str] = None
+    do_you_agree_this_pick_up_password_form: Optional[bool] = None
+    photo_usage_photo_video_permission_form: Optional[str] = None
+    photo_permission_agree_group_photos_electronic: Optional[bool] = None
+    do_you_agree_this_photo_video_permission_form: Optional[bool] = None
+    security_release_policy_form: Optional[bool] = None
+    med_technicians_med_transportation_waiver: Optional[str] = None
+    medical_transportation_waiver: Optional[bool] = None
+    do_you_agree_this_health_policies: Optional[bool] = None
+    parent_sign_admission_outside_waiver: Optional[bool] = None
+    approve_social_media_post: Optional[bool] = None
+    printed_name_social_media_post: Optional[str] = None
+    do_you_agree_this_social_media_post: Optional[bool] = None
+    parent_sign_admission: Optional[str] = None
+    admin_sign_admission: Optional[str] = None
+    emergency_contact_first_id: Optional[int] = None
+    emergency_contact_second_id: Optional[int] = None
+    emergency_contact_third_id: Optional[int] = None
+    emergency_contact_info: Optional[list[EmergencyDetail]] = None
+    pointer:Optional[int] = None 
+    agree_all_above_info_is_correct: Optional[bool] = None  
+
+@app.put("/admission_segment_update/{child_id}")
+async def update_student_admission_segment(child_id: int, admission_form: AdmissionFormUpdate = Body(...)):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+
+            childinfo_sql = """
+            CALL spUpdateChildInfo(%s, %s, %s, %s, %s);
+            """
+            cursor.execute(childinfo_sql, (
+                child_id, 
+                admission_form.parent_id, 
+                admission_form.class_id, 
+                admission_form.child_first_name, 
+                admission_form.child_last_name
+            ))
+            connection.commit()
+
+            # Check if dentist_info is provided
+            if admission_form.child_dentist_info is not None:
+                dentist = admission_form.child_dentist_info
+                dentist_sql = """
+                CALL spUpdateDentist(%s, %s, %s, %s, %s, %s, %s);
+                """
+                cursor.execute(dentist_sql, (
+                    admission_form.child_dentist_id,
+                    dentist.child_dentist_name,
+                    dentist.dentist_telephone_number,
+                    dentist.dentist_street_address,
+                    dentist.dentist_city_address,
+                    dentist.dentist_state_address,
+                    dentist.dentist_zip_address
+                ))
+                connection.commit()
+
+            if admission_form.child_care_provider_info is not None:
+                careprovider = admission_form.child_care_provider_info
+                careprovider_sql = "CALL spUpdateCareProvider(%s, %s, %s, %s, %s, %s, %s, %s);"
+                cursor.execute(careprovider_sql, (
+                    admission_form.child_care_provider_id,
+                    careprovider.child_care_provider_name,
+                    careprovider.child_care_provider_telephone_number,
+                    careprovider.child_hospital_affiliation,
+                    careprovider.child_care_provider_street_address,
+                    careprovider.child_care_provider_city_address,
+                    careprovider.child_care_provider_state_address,
+                    careprovider.child_care_provider_zip_address
+                ))
+                connection.commit()
+            
+            if admission_form.primary_parent_info is not None:
+                parentinfo = admission_form.primary_parent_info
+                parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                cursor.execute(parentinfo_sql, (
+                    admission_form.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                    parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
+                    parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
+                    parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
+                    parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
+                    parentinfo.business_cell_number, parentinfo.password
+                ))
+                connection.commit()
+
+            if admission_form.additional_parent_info is not None:
+                parentinfo = admission_form.additional_parent_info
+                parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                cursor.execute(parentinfo_sql, (
+                    admission_form.additional_parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                    parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
+                    parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
+                    parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
+                    parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
+                    parentinfo.business_cell_number, parentinfo.password
+                ))
+                connection.commit()
+
+            if admission_form.emergency_contact_info is not None:
+                emergency_contact_info = admission_form.emergency_contact_info
+                emergency_contact_sql = "CALL spUpdateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s, %s);"
+
+                for emergencydetail in emergency_contact_info:
+
+                    if emergencydetail is not {}:
+
+                        cursor.execute(emergency_contact_sql, (
+                            emergencydetail.child_emergency_contact_id,
+                            emergencydetail.child_emergency_contact_name,
+                            emergencydetail.child_emergency_contact_relationship,
+                            emergencydetail.child_emergency_contact_full_address,
+                            emergencydetail.child_emergency_contact_city_address,
+                            emergencydetail.child_emergency_contact_state_address,
+                            emergencydetail.child_emergency_contact_zip_address,
+                            emergencydetail.child_emergency_contact_telephone_number
+                        ))
+                        connection.commit()
+
+
+            sql = """
+            CALL spUpdateAdmissionForm(
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            );
+            """
+            cursor.execute(sql, (
+                child_id, admission_form.additional_parent_id, admission_form.child_care_provider_id,
+                admission_form.child_dentist_id, admission_form.dob, admission_form.nick_name, admission_form.primary_language,
+                admission_form.school_age_child_school, admission_form.do_relevant_custody_papers_apply, admission_form.gender,
+                admission_form.special_diabilities, admission_form.allergies_medication_reaction, admission_form.additional_info,
+                admission_form.medication, admission_form.health_insurance, admission_form.policy_number,
+                admission_form.obtaining_emergency_medical_care, admission_form.administration_first_aid_procedures,
+                admission_form.agree_all_above_information_is_correct, admission_form.physical_exam_last_date,
+                admission_form.dental_exam_last_date, admission_form.allergies, admission_form.asthma,
+                admission_form.bleeding_problems, admission_form.diabetes, admission_form.epilepsy,
+                admission_form.frequent_ear_infections, admission_form.frequent_illnesses,
+                admission_form.hearing_problems, admission_form.high_fevers, admission_form.hospitalization,
+                admission_form.rheumatic_fever, admission_form.seizures_convulsions,
+                admission_form.serious_injuries_accidents, admission_form.surgeries, admission_form.vision_problems,
+                admission_form.medical_other, admission_form.illness_during_pregnancy, admission_form.condition_of_newborn,
+                admission_form.duration_of_pregnancy, admission_form.birth_weight_lbs, admission_form.birth_weight_oz,
+                admission_form.complications, admission_form.bottle_fed, admission_form.breast_fed,
+                admission_form.other_siblings_name, admission_form.other_siblings_age,
+                admission_form.family_history_allergies, admission_form.family_history_heart_problems,
+                admission_form.family_history_tuberculosis, admission_form.family_history_asthma,
+                admission_form.family_history_high_blood_pressure, admission_form.family_history_vision_problems,
+                admission_form.family_history_diabetes, admission_form.family_history_hyperactivity,
+                admission_form.family_history_epilepsy, admission_form.no_illnesses_for_this_child, admission_form.age_group_friends,
+                admission_form.neighborhood_friends, admission_form.relationship_with_mother,
+                admission_form.relationship_with_father, admission_form.relationship_with_siblings,
+                admission_form.relationship_with_extended_family, admission_form.fears_conflicts,
+                admission_form.child_response_frustration, admission_form.favorite_activities,
+                admission_form.last_five_years_moved, admission_form.things_used_at_home,
+                admission_form.hours_of_television_daily, admission_form.language_used_at_home,
+                admission_form.changes_at_home_situation, admission_form.educational_expectations_of_child,
+                admission_form.fam_his_instructions, admission_form.do_you_agree_this_immunization_instructions,
+                admission_form.important_fam_members, admission_form.about_family_celebrations,
+                admission_form.childcare_before, admission_form.reason_for_childcare_before,
+                admission_form.what_child_interests, admission_form.drop_off_time, admission_form.pick_up_time,
+                admission_form.restricted_diet, admission_form.restricted_diet_reason, admission_form.eat_own,
+                admission_form.eat_own_reason, admission_form.favorite_foods, admission_form.rest_in_the_middle_day,
+                admission_form.reason_for_rest_in_the_middle_day, admission_form.rest_routine, admission_form.toilet_trained,
+                admission_form.reason_for_toilet_trained, admission_form.explain_for_existing_illness_allergy,
+                admission_form.existing_illness_allergy, admission_form.functioning_at_age,
+                admission_form.explain_for_functioning_at_age, admission_form.explain_able_to_walk,
+                admission_form.able_to_walk, admission_form.explain_communicate_their_needs,
+                admission_form.communicate_their_needs, admission_form.any_medication,
+                admission_form.explain_for_any_medication, admission_form.utilize_special_equipment,
+                admission_form.explain_for_utilize_special_equipment, admission_form.significant_periods,
+                admission_form.explain_for_significant_periods, admission_form.desire_any_accommodations,
+                admission_form.explain_for_desire_any_accommodations, admission_form.additional_information,
+                admission_form.do_you_agree_this, admission_form.child_password_pick_up_password_form,
+                admission_form.do_you_agree_this_pick_up_password_form, admission_form.photo_usage_photo_video_permission_form,
+                admission_form.photo_permission_agree_group_photos_electronic, admission_form.do_you_agree_this_photo_video_permission_form,
+                admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
+                admission_form.medical_transportation_waiver, admission_form.do_you_agree_this_health_policies,
+                admission_form.parent_sign_admission_outside_waiver, admission_form.approve_social_media_post,
+                admission_form.printed_name_social_media_post, admission_form.do_you_agree_this_social_media_post,
+                admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer, admission_form.agree_all_above_info_is_correct
+            ))
+            connection.commit()
+            if(admission_form.admin_sign_admission != None):
+                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(auth_form_sql, (admission_form.child_id, 1, 1, 2))
+                connection.commit()
+                
+            elif(admission_form.parent_sign_admission != None):
+                auth_form_sql = "CALL spUpdateStudentFormRepository(%s,%s, %s, %s);"
+                cursor.execute(auth_form_sql, (admission_form.child_id, 1, 1, 1))
+                connection.commit()
+
+            
+
+            return {"message": f"Admission segment with id {child_id} updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating admission form: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+   
 
 
 class FormRepositary(BaseModel):
@@ -3636,14 +3967,21 @@ async def update_form_status(form_ids: FormIds):
 
     try:
         with connection.cursor() as cursor:
-            # Call the stored procedure
-            sql = "CALL spUpdateMultipleFormStatus(%s);"
-            cursor.execute(sql, (form_ids_str,))
+            update_query = """
+                UPDATE all_form_info 
+                SET form_status = 'Active'
+                WHERE FIND_IN_SET(form_id, %s) > 0 AND form_status = 'Available';
+            """
+
+            # Execute the update query with form_ids as the parameter
+            cursor.execute(update_query, (form_ids_str,))
+
+            # Commit the changes
             connection.commit()
             return {"message": "Form statuses updated successfully"}
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        return {"error": "Form statuses updated failed!!!!"}
     finally:
         if connection:
             connection.close()
@@ -3663,15 +4001,20 @@ async def get_children_by_class(class_ids: ClassIds):
     try:
         with connection.cursor() as cursor:
             # Call the stored procedure
-            sql = "CALL spGetChildDetailsBasedOnMultipleClasses(%s);"
+            sql = """
+            SELECT *
+            FROM child_info
+            WHERE FIND_IN_SET(class_id, %s) > 0 AND is_active = TRUE;
+        """
             cursor.execute(sql, (class_ids_str,))
             result = cursor.fetchall()  # Fetch all matching rows
             return {"children": result}  # Return the children data
     except pymysql.MySQLError as err:
         print(f"Error calling stored procedure: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
+        return {"error": "class based statuses updated failed!!!!"}
     finally:
         if connection:
             connection.close()
-            
+
+  
 handler=mangum.Mangum(app)
