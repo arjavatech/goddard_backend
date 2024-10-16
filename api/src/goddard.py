@@ -2739,112 +2739,119 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
     try:
         with connection.cursor() as cursor:
 
-            parent_table_sql = """
-            CALL spCreateParentInfoAndGetID(%s, @parent_id);
-            """
-            cursor.execute(parent_table_sql, (parent_invite.parent_name,))
-
-            # Fetch the result of the stored procedure (OUT parameter)
-            cursor.execute("SELECT @parent_id AS parent_id;")
-            res = cursor.fetchone()
-            parent_id = res["parent_id"]
+            parent_check_sql = "CALL spGetParentEmail(%s)"
+            cursor.execute(parent_check_sql, (parent_invite.invite_email,))
+            parent_check_result = cursor.fetchone() 
+            if parent_check_result:
+                return {"error": "Email Already Registered with another mail. Please try different email"}
             
-
-            # Call another stored procedure for child info
-            child_table_sql = """
-            CALL spCreateChildInfo(%s, %s, %s, %s, @child_id);
-            """
-            cursor.execute(child_table_sql, (
-                parent_id, 
-                parent_invite.child_classroom_id, 
-                parent_invite.child_fname, 
-                parent_invite.child_lname
-            ))
-            
-            # Retrieve the child_id from the output variable
-            cursor.execute("SELECT @child_id AS child_id;")
-            result = cursor.fetchone()
-            child_id = result['child_id']
-            connection.commit()
-
-            form_sql = "CALL spGetDefaultForm();"
-            cursor.execute(form_sql)
-            default_form_result = cursor.fetchall()
-
-            form_set = set()
-            for form_detail in default_form_result:
-                form_set.add(form_detail["form_id"])
-
-
-            class_form_get_sql = """
-            CALL spGetClassFormRepositoryBasedClassID(%s);
-            """
-            cursor.execute(class_form_get_sql, parent_invite.child_classroom_id)
-            form_result = cursor.fetchall()
-
-            for form_detail in form_result:
-                form_set.add(form_detail["form_id"])
-
-            for form_id in form_set:
-                if(form_id == 1):
-                    cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
-                    connection.commit()
-
-                elif(form_id == 2):
-                    cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
-                    connection.commit()
-                elif(form_id == 3):
-                    cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
-                    connection.commit()
-                elif(form_id == 4):
-                    cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
-                    connection.commit()
-
-                student_form_create_sql = """
-                CALL spCreateStudentFormRepository(%s, %s, %s);
+            else:
+                parent_table_sql = """
+                CALL spCreateParentInfoAndGetID(%s, @parent_id);
                 """
-                cursor.execute(student_form_create_sql, (child_id, form_id, 0))
+                cursor.execute(parent_table_sql, (parent_invite.parent_name,))
+
+                # Fetch the result of the stored procedure (OUT parameter)
+                cursor.execute("SELECT @parent_id AS parent_id;")
+                res = cursor.fetchone()
+                parent_id = res["parent_id"]
+                
+
+                # Call another stored procedure for child info
+                child_table_sql = """
+                CALL spCreateChildInfo(%s, %s, %s, %s, @child_id);
+                """
+                cursor.execute(child_table_sql, (
+                    parent_id, 
+                    parent_invite.child_classroom_id, 
+                    parent_invite.child_fname, 
+                    parent_invite.child_lname
+                ))
+                
+                # Retrieve the child_id from the output variable
+                cursor.execute("SELECT @child_id AS child_id;")
+                result = cursor.fetchone()
+                child_id = result['child_id']
                 connection.commit()
 
-            # Get the current UTC time
-            current_utc_time = datetime.utcnow()
-            uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/signup.html?invite_id={uuid1}"
+                form_sql = "CALL spGetDefaultForm();"
+                cursor.execute(form_sql)
+                default_form_result = cursor.fetchall()
 
-            # Call stored procedure to trigger email invite
-            email_trigger_sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
-            cursor.execute(email_trigger_sql, (parent_invite.invite_email, invite_id, parent_id, current_utc_time))
-            connection.commit()
+                form_set = set()
+                for form_detail in default_form_result:
+                    form_set.add(form_detail["form_id"])
 
-            # Set up email parameters
-            sender = 'noreply.goddard@gmail.com'
-            app_password = 'ynir rnbf owdn mapx'
-            subject = "Invitation to Create an Account for The Goddard School Admission"
 
-            # Email content in HTML
-            html_content = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
-                <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <p>Dear {parent_invite.parent_name},</p>
-                    <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{parent_invite.child_fname + " " + parent_invite.child_lname }</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
-                    <p style="text-align: center;">
-                        <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
-                    </p>
-                    <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
-                    <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
-                </div>
-            </body>
-            </html>
-            """
+                class_form_get_sql = """
+                CALL spGetClassFormRepositoryBasedClassID(%s);
+                """
+                cursor.execute(class_form_get_sql, parent_invite.child_classroom_id)
+                form_result = cursor.fetchall()
 
-            # Initialize Yagmail with the sender's Gmail credentials
-            yag = yagmail.SMTP(user=sender, password=app_password)
+                for form_detail in form_result:
+                    form_set.add(form_detail["form_id"])
 
-            # Sending the email
-            yag.send(to=parent_invite.invite_email, subject=subject, contents=html_content)
+                for form_id in form_set:
+                    if(form_id == 1):
+                        cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
+                        connection.commit()
 
-            return {"message": "Parent invite created and Email sent successfully!"}
+                    elif(form_id == 2):
+                        cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
+                        connection.commit()
+                    elif(form_id == 3):
+                        cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
+                        connection.commit()
+                    elif(form_id == 4):
+                        cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
+                        connection.commit()
+
+                    student_form_create_sql = """
+                    CALL spCreateStudentFormRepository(%s, %s, %s);
+                    """
+                    cursor.execute(student_form_create_sql, (child_id, form_id, 0))
+                    connection.commit()
+
+                # Get the current UTC time
+                current_utc_time = datetime.utcnow()
+                uuid1 = shortuuid.uuid()
+                invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/signup.html?invite_id={uuid1}"
+
+                # Call stored procedure to trigger email invite
+                email_trigger_sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
+                cursor.execute(email_trigger_sql, (parent_invite.invite_email, invite_id, parent_id, current_utc_time))
+                connection.commit()
+
+                # Set up email parameters
+                sender = 'noreply.goddard@gmail.com'
+                app_password = 'ynir rnbf owdn mapx'
+                subject = "Invitation to Create an Account for The Goddard School Admission"
+
+                # Email content in HTML
+                html_content = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                    <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <p>Dear {parent_invite.parent_name},</p>
+                        <p>We hope this message finds you well. We are pleased to inform you that your request to enroll your son, <strong>{parent_invite.child_fname + " " + parent_invite.child_lname }</strong>, at <strong>The Goddard School</strong> has been received and approved for the next stage of the admission process.<br><br>To facilitate the admission process, we have created a secure and user-friendly online portal. We kindly request you to create an account on our admission website, where you can complete your son’s details and proceed with the application.</p>
+                        <p style="text-align: center;">
+                            <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Create Your Account</a>
+                        </p>
+                        <p>Once your account is created, you will be guided through the steps to submit all necessary information and documents. Should you have any questions or require assistance during the process, our support team is available to help.<br><br>Thank you for choosing <strong>The Goddard School</strong> for your son’s education. We look forward to welcoming him to our school community.</p>
+                        <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+                    </div>
+                </body>
+                </html>
+                """
+
+                # Initialize Yagmail with the sender's Gmail credentials
+                yag = yagmail.SMTP(user=sender, password=app_password)
+
+                # Sending the email
+                yag.send(to=parent_invite.invite_email, subject=subject, contents=html_content)
+
+                return {"message": "Parent invite created and Email sent successfully!"}
 
     except pymysql.MySQLError as err:
         return {"error": f"Parent invite mail with id {parent_invite.invite_email} is already exists!!!"}
@@ -2946,10 +2953,26 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
 
     try:
         with connection.cursor() as cursor:
-            
+
             invite_id = sign_up_data.get("invite_id")
             email = sign_up_data.get("email")
             password = sign_up_data.get("password")
+
+            invite_check_sql = "CALL spGetParentIdInInviteTable(%s);"
+            cursor.execute(invite_check_sql, (invite_id,))
+            invite_info_result = cursor.fetchone()
+            
+            if invite_info_result:
+                parent_id = invite_info_result['parent_id']
+
+                parent_info_sql = "CALL spGetParentInfo(%s);"
+                cursor.execute(parent_info_sql, (parent_id,))
+                res2 = cursor.fetchone()
+
+                if res2 and res2["parent_email"] != None:
+                    return {"error" : "Already registered with another mail-id. (Invalid URL)"}
+            
+            
 
             mail_list_get_sql = "CALL spGetAllSignUpAndInviteEmails();"
             cursor.execute(mail_list_get_sql, )
@@ -2961,7 +2984,7 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
                 for data in result:
                   mail_list.append(data["parent_email"])
             if email in mail_list:
-                return {"error": f"signup_id {email} Already Registered"}
+                return {"error": f"signup_id with email {email} Already Registered"}
             else:
 
                 sql = "CALL spGetParentIdInInviteTable(%s);"
@@ -2970,8 +2993,8 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
                 
                 if result:
                     parent_id = result['parent_id']
-                    password_update_sql = "CALL spUpdateParentInfoPassword(%s, %s, %s);"
-                    cursor.execute(password_update_sql, (parent_id,email, password))
+                    password_update_sql = "CALL spUpdateParentInfoPassword(%s, %s, %s, %s);"
+                    cursor.execute(password_update_sql, (parent_id,email, password, invite_id))
                     connection.commit()
 
                     return {"message": "SignUp Data successfully updated"}
@@ -3005,7 +3028,7 @@ async def signin_check(sign_up_data: dict = Body(...)):
                 else:
                     return {"error" : f"admin_id {email} password was mismatch"}
             else:
-               parent_check_sql = "CALL spGetParentInfoBasedEmail(%s);"
+               parent_check_sql = "CALL spGetParentEmail(%s);"
                cursor.execute(parent_check_sql, (email,))
                parent_check_result = cursor.fetchone() 
                if parent_check_result:
@@ -3876,47 +3899,54 @@ async def password_change(email: str):
     try:
         with connection.cursor() as cursor:
 
-            sql = "CALL spGetParentInfoBasedEmail(%s);"
+            sql = "CALL spGetParentEmail(%s);"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
             
             if result:
-                sender = 'noreply.goddard@gmail.com'
-                app_password = 'ynir rnbf owdn mapx'
+                if result['is_password_reset'] == True or result['is_password_reset'] == None:
+                    sender = 'noreply.goddard@gmail.com'
+                    app_password = 'ynir rnbf owdn mapx'
 
-                uuid1 = shortuuid.uuid()
-                invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/reset_password.html?invite_id={uuid1}"
-
-
-                subject = "Reset Your Password for The Goddard school Admission Portal"
+                    uuid1 = shortuuid.uuid()
+                    invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/reset_password.html?invite_id={uuid1}"
 
 
-                html_content = f"""
-                <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
-                    <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                        <p>Dear {result["parent_name"]},</p>
-                        <p>We hope this message finds you well. It appears that you have requested to reset your password for your account on the <strong>The Goddard school</strong> admission portal.<br><br>To reset your password and regain access to your account, please click on the link below:</p>
-                        <p style="text-align: center;">
-                            <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
-                        </p>
-                        <p>Once you have reset your password, you will be able to log in and continue with the admission process. If you did not request a password reset or have any questions, please do not hesitate to contact our support team for assistance.<br><br>hank you for your attention to this matter. We look forward to assisting you with the admission process, to The Goddard School.</p>
-                        <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
+                    subject = "Reset Your Password for The Goddard school Admission Portal"
 
-                    </div>
-                </body>
-                </html>
-                """
 
-                # Initialize Yagmail with the sender's Gmail credentials
-                yag = yagmail.SMTP(user=sender, password=app_password)
+                    html_content = f"""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1; color: #333;">
+                        <div style="max-width: 500px; margin: auto; padding: 0px 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <p>Dear {result["parent_name"]},</p>
+                            <p>We hope this message finds you well. It appears that you have requested to reset your password for your account on the <strong>The Goddard school</strong> admission portal.<br><br>To reset your password and regain access to your account, please click on the link below:</p>
+                            <p style="text-align: center;">
+                                <a href="{invite_id}" style="display: inline-block; padding: 10px 20px; margin: 10px 0; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
+                            </p>
+                            <p>Once you have reset your password, you will be able to log in and continue with the admission process. If you did not request a password reset or have any questions, please do not hesitate to contact our support team for assistance.<br><br>hank you for your attention to this matter. We look forward to assisting you with the admission process, to The Goddard School.</p>
+                            <p>Warm regards,<br>Admin Team,<br><strong>The Goddard School</strong></p>
 
-                # Sending the email with HTML table in the body and Excel attachment
-                yag.send(to=email, subject=subject, contents=html_content)
+                        </div>
+                    </body>
+                    </html>
+                    """
 
-                return {"message": "Password reset email sent successfully!"}
+                    # Initialize Yagmail with the sender's Gmail credentials
+                    yag = yagmail.SMTP(user=sender, password=app_password)
+
+                    # Sending the email with HTML table in the body and Excel attachment
+                    yag.send(to=email, subject=subject, contents=html_content)
+
+                    password_sql = "CALL spUpdatePasswordResetFlag(%s, %s);"
+                    cursor.execute(password_sql, (email, invite_id))
+                    connection.commit()
+
+                    return {"message": "Password reset email sent successfully!"}
+                else:
+                    return {"error" : "We have already sent the password reset page URL to your email. Please check your inbox."}
             else:
-                raise HTTPException(status_code=404, detail=f"SignUpInfo with email_id {email} not found")
+                return {"error" :f"SignUpInfo with email_id {email} not found"}
     except pymysql.MySQLError:
         raise HTTPException(status_code=500, detail="Database error")
     finally:
@@ -3933,19 +3963,25 @@ async def update_parent_password(login_info = Body(...)):
         with connection.cursor() as cursor:
             email = login_info.get("email")
             password = login_info.get("password")
+            signup_url = login_info.get("signup_url")
 
-            parent_info_sql = "CALL spGetParentInfoBasedEmail(%s);"
-            cursor.execute(parent_info_sql, (email,))
+            parent_info_sql = "CALL spGetParentInfoBasedEmail(%s, %s);"
+            cursor.execute(parent_info_sql, (email, signup_url))
             parent_info_result = cursor.fetchone()
             
             if parent_info_result:
-                sql = "CALL spUpdateParentPassword(%s, %s);"
-                cursor.execute(sql, (email, password))
-                connection.commit()
+                if  parent_info_result['is_password_reset'] == False:
+                    sql = "CALL spUpdateParentPassword(%s, %s);"
+                    cursor.execute(sql, (email, password))
+                    connection.commit()
 
-                return {"message": f"Parent Info with email_id {email} password updated successfully"}
+
+                    return {"message": f"Parent Info with email_id {email} password updated successfully"}
+                else:
+                    return {"error": "Forget password url was expired!!!"}
+                
             else:
-                raise HTTPException(status_code=500, detail=f"Parent info with email_id {email} not found")
+                return {"error" : f"Parent info with email_id {email} not found or Signup url is invalid"}
     except pymysql.MySQLError as err:
         print(f"Error updating signup_info: {err}")
         raise HTTPException(status_code=500, detail={"error": f"Parent Info with email_id {email} password update call failed (DB Error)"})
@@ -4015,6 +4051,24 @@ async def get_children_by_class(class_ids: ClassIds):
     finally:
         if connection:
             connection.close()
+
+@app.get("/primary_parent/getall")  
+def get_all_parent_info():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            sql = "CALL spGetAllPrimaryParent();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+    except pymysql.MySQLError as e:
+        print(f"Error updating signup_info: {e}")
+        return {"error": f"Primary parent not found"}
+    finally:
+        connection.close()
 
   
 handler=mangum.Mangum(app)
