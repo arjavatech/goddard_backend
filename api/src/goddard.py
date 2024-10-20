@@ -3467,7 +3467,7 @@ async def fetch_child_details(child_id: int):
 class AdmissionFormUpdate(BaseModel):
     child_id: int
     parent_id: Optional[int] = None
-    class_id: int
+    class_id: Optional[int] = None
     child_first_name: Optional[str] = None
     child_last_name: Optional[str] = None
     primary_parent_info: Optional[ParentInfo] = None
@@ -3689,7 +3689,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
 
                 for emergencydetail in emergency_contact_info:
 
-                    if emergencydetail is not {}:
+                    if emergencydetail != {}:
 
                         cursor.execute(emergency_contact_sql, (
                             emergencydetail.child_emergency_contact_id,
@@ -3785,7 +3785,6 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
         if connection:
             connection.close()
    
-
 
 class FormRepositary(BaseModel):
     form_id: Optional[int] = None
