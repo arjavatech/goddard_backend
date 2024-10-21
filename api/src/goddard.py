@@ -648,6 +648,7 @@ async def delete_form_info(form_id: int):
 
 # ParentInfo Schema
 class ParentInfo(BaseModel):
+    parent_id: Optional[int] = None
     parent_email: Optional[str] = None
     parent_name: Optional[str] = None
     parent_street_address: Optional[str] = None
@@ -900,6 +901,7 @@ async def delete_class(id: int):
 
 # CareProvider Schema
 class CareProvider(BaseModel):
+    child_care_provider_id: Optional[int] = None
     child_care_provider_name: Optional[str] = None
     child_care_provider_telephone_number: Optional[str] = None
     child_hospital_affiliation: Optional[str] = None
@@ -1030,6 +1032,7 @@ async def delete_care_provider(id: int):
 
 # Dentist Schema
 class Dentist(BaseModel):
+    child_dentist_id: Optional[int] = None
     child_dentist_name: Optional[str] = None
     dentist_telephone_number: Optional[str] = None
     dentist_street_address: Optional[str] = None
@@ -1921,6 +1924,7 @@ class EnrollmentForm(BaseModel):
     point_sixteen_initial_here: Optional[str] = None
     point_seventeen_initial_here: Optional[str] = None
     point_eighteen_initial_here: Optional[str] = None
+    point_ninteen_initial_here: Optional[str] = None
     preferred_start_date: Optional[str] = None
     preferred_schedule: Optional[str] = None
     full_day: Optional[bool] = None
@@ -1941,14 +1945,14 @@ async def create_enrollment(enrollment: EnrollmentForm = Body(...)):
     try:
         with connection.cursor() as cursor:
             sql = """CALL spCreateEnrollmentForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );"""
             cursor.execute(sql, (
                 enrollment.child_id, enrollment.child_first_name, enrollment.point_one_field_three, enrollment.point_two_initial_here,
                 enrollment.point_three_initial_here, enrollment.point_four_initial_here, enrollment.point_five_initial_here, enrollment.point_six_initial_here,
                 enrollment.point_seven_initial_here, enrollment.point_eight_initial_here, enrollment.point_nine_initial_here, enrollment.point_ten_initial_here,
                 enrollment.point_eleven_initial_here, enrollment.point_twelve_initial_here, enrollment.point_thirteen_initial_here, enrollment.point_fourteen_initial_here,
-                enrollment.point_fifteen_initial_here, enrollment.point_sixteen_initial_here, enrollment.point_seventeen_initial_here, enrollment.point_eighteen_initial_here,
+                enrollment.point_fifteen_initial_here, enrollment.point_sixteen_initial_here, enrollment.point_seventeen_initial_here, enrollment.point_eighteen_initial_here, enrollment.point_ninteen_initial_here,
                 enrollment.preferred_start_date, enrollment.preferred_schedule, enrollment.full_day, enrollment.half_day, enrollment.parent_sign_enroll,
                 enrollment.admin_sign_enroll
             ))
@@ -2012,14 +2016,14 @@ async def update_enrollment(id: int, enrollment: EnrollmentForm = Body(...)):
     try:
         with connection.cursor() as cursor:
             sql = """CALL spUpdateEnrollmentForm(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );"""
             cursor.execute(sql, (
                 enrollment.child_id, enrollment.child_first_name, enrollment.point_one_field_three, enrollment.point_two_initial_here,
                 enrollment.point_three_initial_here, enrollment.point_four_initial_here, enrollment.point_five_initial_here, enrollment.point_six_initial_here,
                 enrollment.point_seven_initial_here, enrollment.point_eight_initial_here, enrollment.point_nine_initial_here, enrollment.point_ten_initial_here,
                 enrollment.point_eleven_initial_here, enrollment.point_twelve_initial_here, enrollment.point_thirteen_initial_here, enrollment.point_fourteen_initial_here,
-                enrollment.point_fifteen_initial_here, enrollment.point_sixteen_initial_here, enrollment.point_seventeen_initial_here, enrollment.point_eighteen_initial_here,
+                enrollment.point_fifteen_initial_here, enrollment.point_sixteen_initial_here, enrollment.point_seventeen_initial_here, enrollment.point_eighteen_initial_here, enrollment.point_ninteen_initial_here,
                 enrollment.preferred_start_date, enrollment.preferred_schedule, enrollment.full_day, enrollment.half_day, enrollment.parent_sign_enroll,
                 enrollment.admin_sign_enroll
             ))
@@ -2859,8 +2863,6 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
         if connection:
             connection.close()
 
-
-
 @app.get("/parent_invite_mail/resend/{invite_email}")
 async def parent_invite_create(invite_email: str):
     connection = connect_to_database()
@@ -2876,15 +2878,13 @@ async def parent_invite_create(invite_email: str):
             cursor.execute(parent_table_sql, (invite_email,))
             res = cursor.fetchone()
             parent_id = res["parent_id"]
+            invite_id = res["invite_id"]
 
             parent_info_sql = "CALL spGetParentInfo(%s);"
             cursor.execute(parent_info_sql, (parent_id,))
             res2 = cursor.fetchone()
             
             parent_name = res2["parent_name"]
-
-
-            
 
             # Call another stored procedure for child info
             child_table_sql = """
@@ -2900,8 +2900,6 @@ async def parent_invite_create(invite_email: str):
 
             # Get the current UTC time
             current_utc_time = datetime.utcnow()
-            uuid1 = shortuuid.uuid()
-            invite_id = f"https://arjavatech.github.io/goddard-frontend-dev/signup.html?invite_id={uuid1}"
 
             # Call stored procedure to trigger email invite
             email_trigger_sql = "CALL spUpdateParentInvite(%s, %s, %s, %s);"
@@ -3007,7 +3005,6 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
         if connection:
             connection.close()
 
-
 @app.post("/sign_in/check")
 async def signin_check(sign_up_data: dict = Body(...)):
     connection = connect_to_database()
@@ -3064,7 +3061,6 @@ async def get_all_invite_status():
     finally:
         if connection:
             connection.close()
-
 
 @app.get("/parent_invite_info/all")
 async def get_parent_invites():
@@ -3393,38 +3389,38 @@ def get_form_based_child_count(form_id: int):
             connection.close()
 
 
-@app.get("/child_all_details/fetch/{child_id}")
-async def fetch_child_details(child_id: int):
-    connection = connect_to_database()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Failed to connect to database")
+# @app.get("/child_all_details/fetch/{child_id}")
+# async def fetch_child_details(child_id: int):
+#     connection = connect_to_database()
+#     if not connection:
+#         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
-    try:
-        with connection.cursor() as cursor:
-            sql = "CALL spGetStudentAllDetails(%s);"
-            cursor.execute(sql, (child_id,))
-            result = cursor.fetchone()
-            if result:
-                # Deserialize the JSON strings
-                filtered_result = {}
-                for key, value in result.items():
-                    if value is not None:
-                        try:
-                            # Try to load value as JSON if it's a valid JSON string
-                            filtered_result[key.split('.')[-1]] = json.loads(value)
-                        except (json.JSONDecodeError, TypeError):
-                            # If it's not a JSON string, keep the value as it is
-                            filtered_result[key.split('.')[-1]] = value
+#     try:
+#         with connection.cursor() as cursor:
+#             sql = "CALL spGetStudentAllDetails(%s);"
+#             cursor.execute(sql, (child_id,))
+#             result = cursor.fetchone()
+#             if result:
+#                 # Deserialize the JSON strings
+#                 filtered_result = {}
+#                 for key, value in result.items():
+#                     # if value is not None:
+#                     try:
+#                         # Try to load value as JSON if it's a valid JSON string
+#                         filtered_result[key.split('.')[-1]] = json.loads(value)
+#                     except (json.JSONDecodeError, TypeError):
+#                         # If it's not a JSON string, keep the value as it is
+#                         filtered_result[key.split('.')[-1]] = value
 
-                return filtered_result
-            else:
-                raise HTTPException(status_code=404, detail=f"Student info with id {child_id} not found")
-    except pymysql.MySQLError as err:
-        print(f"Error fetching form info: {err}")
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        if connection:
-            connection.close()
+#                 return filtered_result
+#             else:
+#                 raise HTTPException(status_code=404, detail=f"Student info with id {child_id} not found")
+#     except pymysql.MySQLError as err:
+#         print(f"Error fetching form info: {err}")
+#         raise HTTPException(status_code=500, detail="Database error")
+#     finally:
+#         if connection:
+#             connection.close()
 
 @app.get("/child_all_form_details/fetch/{child_id}")
 async def fetch_child_details(child_id: int):
@@ -3442,7 +3438,7 @@ async def fetch_child_details(child_id: int):
                 # Deserialize the JSON strings
                 filtered_result = {}
                 for key, value in result.items():
-                    if value is not None:
+                    if key not in ("dentist_id", "is_active", "care_provider_id", "emergency_contact_first_id", "emergency_contact_second_id", "emergency_contact_third_id", "additional_parent_id", "parent_id"):
                         try:
                             # Try to load value as JSON if it's a valid JSON string
                             filtered_result[key.split('.')[-1]] = json.loads(value)
@@ -3516,8 +3512,8 @@ class AdmissionFormUpdate(BaseModel):
     birth_weight_lbs: Optional[str] = None
     birth_weight_oz: Optional[str] = None
     complications: Optional[str] = None
-    bottle_fed: Optional[str] = None
-    breast_fed: Optional[str] = None
+    bottle_fed: Optional[bool] = None
+    breast_fed: Optional[bool] = None
     other_siblings_name: Optional[str] = None
     other_siblings_age: Optional[str] = None
     family_history_allergies: Optional[bool] = None
@@ -3602,7 +3598,7 @@ class AdmissionFormUpdate(BaseModel):
     emergency_contact_third_id: Optional[int] = None
     emergency_contact_info: Optional[list[EmergencyDetail]] = None
     pointer:Optional[int] = None 
-    agree_all_above_info_is_correct: Optional[bool] = None  
+    agree_all_above_info_is_correct: Optional[bool] = None
 
 @app.put("/admission_segment_update/{child_id}")
 async def update_student_admission_segment(child_id: int, admission_form: AdmissionFormUpdate = Body(...)):
@@ -3628,40 +3624,107 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
             # Check if dentist_info is provided
             if admission_form.child_dentist_info is not None:
                 dentist = admission_form.child_dentist_info
-                dentist_sql = """
-                CALL spUpdateDentist(%s, %s, %s, %s, %s, %s, %s);
-                """
-                cursor.execute(dentist_sql, (
-                    admission_form.child_dentist_id,
-                    dentist.child_dentist_name,
-                    dentist.dentist_telephone_number,
-                    dentist.dentist_street_address,
-                    dentist.dentist_city_address,
-                    dentist.dentist_state_address,
-                    dentist.dentist_zip_address
-                ))
+
+                if dentist.child_dentist_id is not None and dentist.child_dentist_name is not None:
+                    dentist_sql = """
+                    CALL spUpdateDentist(%s, %s, %s, %s, %s, %s, %s);
+                    """
+                    cursor.execute(dentist_sql, (
+                        dentist.child_dentist_id,
+                        dentist.child_dentist_name,
+                        dentist.dentist_telephone_number,
+                        dentist.dentist_street_address,
+                        dentist.dentist_city_address,
+                        dentist.dentist_state_address,
+                        dentist.dentist_zip_address
+                    ))
+                elif dentist.child_dentist_id is not None and dentist.child_dentist_name is None:
+                    dentist_sql = """
+                    CALL spUpdateDentistIdOnly(%s, %s);
+                    """
+                    cursor.execute(dentist_sql, (
+                        child_id,
+                        dentist.child_dentist_id
+                    ))   
+                elif dentist.child_dentist_id is None and dentist.child_dentist_name is not None:
+                    child_dentist_id = None
+                    d_sql = """
+                    CALL spCreateDentistReturnId(%s, %s, %s, %s, %s, %s, @child_dentist_id);
+                    """
+                    cursor.execute(d_sql, (
+                        dentist.child_dentist_name,
+                        dentist.dentist_telephone_number,
+                        dentist.dentist_street_address,
+                        dentist.dentist_city_address,
+                        dentist.dentist_state_address,
+                        dentist.dentist_zip_address
+                    ))
+                    
+                    # Retrieve the child_dentist_id from the output variable
+                    cursor.execute("SELECT @child_dentist_id AS child_dentist_id;")
+                    result = cursor.fetchone()
+                    child_dentist_id = result['child_dentist_id']
+                    connection.commit()
+                    dentist_sql = """
+                    CALL spUpdateDentistIdOnly(%s, %s);
+                    """
+                    cursor.execute(dentist_sql, (
+                        child_id,
+                        child_dentist_id
+                    ))        
                 connection.commit()
 
             if admission_form.child_care_provider_info is not None:
                 careprovider = admission_form.child_care_provider_info
-                careprovider_sql = "CALL spUpdateCareProvider(%s, %s, %s, %s, %s, %s, %s, %s);"
-                cursor.execute(careprovider_sql, (
-                    admission_form.child_care_provider_id,
-                    careprovider.child_care_provider_name,
-                    careprovider.child_care_provider_telephone_number,
-                    careprovider.child_hospital_affiliation,
-                    careprovider.child_care_provider_street_address,
-                    careprovider.child_care_provider_city_address,
-                    careprovider.child_care_provider_state_address,
-                    careprovider.child_care_provider_zip_address
-                ))
+                if careprovider.child_care_provider_id is not None and careprovider.child_care_provider_name is not None:
+                    careprovider_sql = "CALL spUpdateCareProvider(%s, %s, %s, %s, %s, %s, %s, %s);"
+                    cursor.execute(careprovider_sql, (
+                        careprovider.child_care_provider_id,
+                        careprovider.child_care_provider_name,
+                        careprovider.child_care_provider_telephone_number,
+                        careprovider.child_hospital_affiliation,
+                        careprovider.child_care_provider_street_address,
+                        careprovider.child_care_provider_city_address,
+                        careprovider.child_care_provider_state_address,
+                        careprovider.child_care_provider_zip_address
+                    ))
+                elif careprovider.child_care_provider_id is not None and careprovider.child_care_provider_name is None:
+                    careprovider_sql = "CALL spUpdateCareProviderIdOnly(%s, %s);"
+                    cursor.execute(careprovider_sql, (
+                        child_id,
+                        careprovider.child_care_provider_id
+                    ))
+                elif careprovider.child_care_provider_id is  None and careprovider.child_care_provider_name is not None:
+                    child_care_provider_id = None
+                    cp_sql = """
+                    CALL spCreateCareProviderReturnId(%s, %s, %s, %s, %s, %s, %s, @child_care_provider_id);
+                    """
+                    cursor.execute(cp_sql, (
+                        careprovider.child_care_provider_name,
+                        careprovider.child_care_provider_telephone_number,
+                        careprovider.child_hospital_affiliation,
+                        careprovider.child_care_provider_street_address,
+                        careprovider.child_care_provider_city_address,
+                        careprovider.child_care_provider_state_address,
+                        careprovider.child_care_provider_zip_address
+                    ))
+                    # Retrieve the child_care_provider_id from the output variable
+                    cursor.execute("SELECT @child_care_provider_id AS child_care_provider_id;")
+                    result = cursor.fetchone()
+                    child_care_provider_id = result['child_care_provider_id']
+                    connection.commit()
+                    careprovider_sql = "CALL spUpdateCareProviderIdOnly(%s, %s);"
+                    cursor.execute(careprovider_sql, (
+                        child_id,
+                        child_care_provider_id
+                    ))
                 connection.commit()
             
             if admission_form.primary_parent_info is not None:
                 parentinfo = admission_form.primary_parent_info
                 parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 cursor.execute(parentinfo_sql, (
-                    admission_form.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                    parentinfo.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                     parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
                     parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                     parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
@@ -3672,36 +3735,97 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
 
             if admission_form.additional_parent_info is not None:
                 parentinfo = admission_form.additional_parent_info
-                parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                cursor.execute(parentinfo_sql, (
-                    admission_form.additional_parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
-                    parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
-                    parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
-                    parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
-                    parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
-                    parentinfo.business_cell_number, parentinfo.password
-                ))
+                if parentinfo.parent_id is not None and parentinfo.parent_email is not None:
+                    parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                    cursor.execute(parentinfo_sql, (
+                        parentinfo.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                        parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
+                        parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
+                        parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
+                        parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
+                        parentinfo.business_cell_number, parentinfo.password
+                    ))
+                elif parentinfo.parent_id is not None and parentinfo.parent_email is None:
+                    parentinfo_sql = "CALL spUpdateAdditionalParentInfoIDOnly(%s, %s)"
+                    cursor.execute(parentinfo_sql, (
+                        child_id,
+                        parentinfo.parent_id
+                    ))
+                elif parentinfo.parent_id is None and parentinfo.parent_email is not None:
+                    parent_id = None
+
+                    ap_sql = "CALL spCreateParentInfoReturnId(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, @parent_id)"
+                    cursor.execute(ap_sql, (
+                        parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                        parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
+                        parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
+                        parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
+                        parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
+                        parentinfo.business_cell_number, parentinfo.password
+                    ))
+                    
+                    # Retrieve the additional_parent_id from the output variable
+                    cursor.execute("SELECT @parent_id AS parent_id;")
+                    result = cursor.fetchone()
+                    parent_id = result['parent_id']
+                    connection.commit()
+                    parentinfo_sql = "CALL spUpdateAdditionalParentInfoIDOnly(%s, %s)"
+                    cursor.execute(parentinfo_sql, (
+                        child_id,
+                        parent_id
+                    ))
                 connection.commit()
 
             if admission_form.emergency_contact_info is not None:
                 emergency_contact_info = admission_form.emergency_contact_info
-                emergency_contact_sql = "CALL spUpdateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s, %s);"
+                index = 0
 
                 for emergencydetail in emergency_contact_info:
-
                     if emergencydetail != {}:
-
-                        cursor.execute(emergency_contact_sql, (
-                            emergencydetail.child_emergency_contact_id,
-                            emergencydetail.child_emergency_contact_name,
-                            emergencydetail.child_emergency_contact_relationship,
-                            emergencydetail.child_emergency_contact_full_address,
-                            emergencydetail.child_emergency_contact_city_address,
-                            emergencydetail.child_emergency_contact_state_address,
-                            emergencydetail.child_emergency_contact_zip_address,
-                            emergencydetail.child_emergency_contact_telephone_number
-                        ))
+                        if emergencydetail.child_emergency_contact_id is not None and emergencydetail.child_emergency_contact_name is not None:
+                            emergency_contact_sql = "CALL spUpdateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s, %s);"
+                            cursor.execute(emergency_contact_sql, (
+                                emergencydetail.child_emergency_contact_id,
+                                emergencydetail.child_emergency_contact_name,
+                                emergencydetail.child_emergency_contact_relationship,
+                                emergencydetail.child_emergency_contact_full_address,
+                                emergencydetail.child_emergency_contact_city_address,
+                                emergencydetail.child_emergency_contact_state_address,
+                                emergencydetail.child_emergency_contact_zip_address,
+                                emergencydetail.child_emergency_contact_telephone_number
+                            ))
+                        elif emergencydetail.child_emergency_contact_id is not None and emergencydetail.child_emergency_contact_name is None:
+                            emergency_contact_sql = "CALL spUpdateEmergencyContactIDOnly(%s, %s, %s);"
+                            cursor.execute(emergency_contact_sql, (
+                                child_id,
+                                emergencydetail.child_emergency_contact_id,
+                                index
+                            ))
+                        elif emergencydetail.child_emergency_contact_id is None and emergencydetail.child_emergency_contact_name is not None:
+                            child_emergency_contact_id = None
+                            ec_sql = "CALL spCreateEmergencyDetailReturnId(%s, %s, %s, %s, %s, %s, %s, @child_emergency_contact_id);"
+                            cursor.execute(ec_sql, (
+                                emergencydetail.child_emergency_contact_name,
+                                emergencydetail.child_emergency_contact_relationship,
+                                emergencydetail.child_emergency_contact_full_address,
+                                emergencydetail.child_emergency_contact_city_address,
+                                emergencydetail.child_emergency_contact_state_address,
+                                emergencydetail.child_emergency_contact_zip_address,
+                                emergencydetail.child_emergency_contact_telephone_number
+                            ))
+                            # Retrieve the child_emergency_contact_id from the output variable
+                            cursor.execute("SELECT @child_emergency_contact_id AS child_emergency_contact_id;")
+                            result = cursor.fetchone()
+                            child_emergency_contact_id = result['child_emergency_contact_id']
+                            connection.commit()
+                            emergency_contact_sql = "CALL spUpdateEmergencyContactIDOnly(%s, %s, %s);"
+                            cursor.execute(emergency_contact_sql, (
+                                child_id,
+                                child_emergency_contact_id,
+                                index
+                            ))
                         connection.commit()
+                    index = index+1
 
 
             sql = """

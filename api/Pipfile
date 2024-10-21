@@ -10,6 +10,7 @@ mangum = "*"
 cryptography = "*"
 yagmail = "*"
 shortuuid = "*"
+uvicorn = "*"
 
 [dev-packages]
 
