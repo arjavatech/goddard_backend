@@ -851,7 +851,10 @@ async def get_all_classes():
             sql = "CALL spGetAllClass();"
             cursor.execute(sql)
             result = cursor.fetchall()
-            return result
+            if result:
+             return result
+            else:
+                return []
     except pymysql.MySQLError as err:
         print(f"Error fetching classes: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -1493,14 +1496,14 @@ class AdmissionForm(BaseModel):
     rest_routine: Optional[str] = None
     toilet_trained: Optional[bool] = None
     reason_for_toilet_trained: Optional[str] = None
-    explain_for_existing_illness_allergy: Optional[bool] = None
-    existing_illness_allergy: Optional[str] = None
+    explain_for_existing_illness_allergy: Optional[str] = None
+    existing_illness_allergy: Optional[bool] = None
     functioning_at_age: Optional[bool] = None
     explain_for_functioning_at_age: Optional[str] = None
-    explain_able_to_walk: Optional[str] = None
+    explain_for_able_to_walk: Optional[str] = None
     able_to_walk: Optional[bool] = None
-    explain_communicate_their_needs: Optional[bool] = None
-    communicate_their_needs: Optional[str] = None
+    explain_for_communicate_their_needs: Optional[str] = None
+    communicate_their_needs: Optional[bool] = None
     any_medication: Optional[bool] = None
     explain_for_any_medication: Optional[str] = None
     utilize_special_equipment: Optional[bool] = None
@@ -1520,7 +1523,7 @@ class AdmissionForm(BaseModel):
     med_technicians_med_transportation_waiver: Optional[str] = None
     medical_transportation_waiver: Optional[str] = None
     do_you_agree_this_health_policies: Optional[str] = None
-    parent_sign_admission_outside_waiver: Optional[str] = None
+    parent_sign_outside_waiver: Optional[str] = None
     approve_social_media_post: Optional[bool] = None
     printed_name_social_media_post: Optional[str] = None
     do_you_agree_this_social_media_post: Optional[str] = None
@@ -1586,8 +1589,8 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
                 admission_form.reason_for_rest_in_the_middle_day, admission_form.rest_routine, admission_form.toilet_trained,
                 admission_form.reason_for_toilet_trained, admission_form.explain_for_existing_illness_allergy,
                 admission_form.existing_illness_allergy, admission_form.functioning_at_age,
-                admission_form.explain_for_functioning_at_age, admission_form.explain_able_to_walk,
-                admission_form.able_to_walk, admission_form.explain_communicate_their_needs,
+                admission_form.explain_for_functioning_at_age, admission_form.explain_for_able_to_walk,
+                admission_form.able_to_walk, admission_form.explain_for_communicate_their_needs,
                 admission_form.communicate_their_needs, admission_form.any_medication,
                 admission_form.explain_for_any_medication, admission_form.utilize_special_equipment,
                 admission_form.explain_for_utilize_special_equipment, admission_form.significant_periods,
@@ -1598,7 +1601,7 @@ async def create_admission_form(admission_form: AdmissionForm = Body(...)):
                 admission_form.photo_permission_agree_group_photos_electronic, admission_form.do_you_agree_this_photo_video_permission_form,
                 admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
                 admission_form.medical_transportation_waiver, admission_form.do_you_agree_this_health_policies,
-                admission_form.parent_sign_admission_outside_waiver, admission_form.approve_social_media_post,
+                admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
                 admission_form.printed_name_social_media_post, admission_form.do_you_agree_this_social_media_post,
                 admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer, admission_form.agree_all_above_info_is_correct
             ))
@@ -1705,8 +1708,8 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
                 admission_form.reason_for_rest_in_the_middle_day, admission_form.rest_routine, admission_form.toilet_trained,
                 admission_form.reason_for_toilet_trained, admission_form.explain_for_existing_illness_allergy,
                 admission_form.existing_illness_allergy, admission_form.functioning_at_age,
-                admission_form.explain_for_functioning_at_age, admission_form.explain_able_to_walk,
-                admission_form.able_to_walk, admission_form.explain_communicate_their_needs,
+                admission_form.explain_for_functioning_at_age, admission_form.explain_for_able_to_walk,
+                admission_form.able_to_walk, admission_form.explain_for_communicate_their_needs,
                 admission_form.communicate_their_needs, admission_form.any_medication,
                 admission_form.explain_for_any_medication, admission_form.utilize_special_equipment,
                 admission_form.explain_for_utilize_special_equipment, admission_form.significant_periods,
@@ -1717,19 +1720,19 @@ async def update_admission_form(child_id: int, admission_form: AdmissionForm = B
                 admission_form.photo_permission_agree_group_photos_electronic, admission_form.do_you_agree_this_photo_video_permission_form,
                 admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
                 admission_form.medical_transportation_waiver, admission_form.do_you_agree_this_health_policies,
-                admission_form.parent_sign_admission_outside_waiver, admission_form.approve_social_media_post,
+                admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
                 admission_form.printed_name_social_media_post, admission_form.do_you_agree_this_social_media_post,
                 admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer, admission_form.agree_all_above_info_is_correct
             ))
             connection.commit()
             if(admission_form.admin_sign_admission != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (admission_form.child_id, 1, 1, 2))
+                admission_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(admission_form_sql, (admission_form.child_id, 1, 1, 2))
                 connection.commit()
                 
             elif(admission_form.parent_sign_admission != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s,%s, %s, %s);"
-                cursor.execute(auth_form_sql, (admission_form.child_id, 1, 1, 1))
+                admission_form_sql = "CALL spUpdateStudentFormRepository(%s,%s, %s, %s);"
+                cursor.execute(admission_form_sql, (admission_form.child_id, 1, 1, 1))
                 connection.commit()
 
             return {"message": f"Admission form with id {child_id} updated successfully"}
@@ -2030,13 +2033,13 @@ async def update_enrollment(id: int, enrollment: EnrollmentForm = Body(...)):
             connection.commit()
 
             if(enrollment.admin_sign_enroll != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (enrollment.child_id, 4, 4, 2))
+                enrollment_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(enrollment_form_sql, (enrollment.child_id, 4, 4, 2))
                 connection.commit()
                 
             elif(enrollment.parent_sign_enroll != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (enrollment.child_id, 4, 4, 1))
+                enrollment_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(enrollment_form_sql, (enrollment.child_id, 4, 4, 1))
                 connection.commit()
 
             return {"message": f"Enrollment with id {id} updated successfully"}
@@ -2220,13 +2223,13 @@ async def update_parent_handbook(child_id: int, parent_handbook: ParentHandbook 
             connection.commit()
 
             if(parent_handbook.admin_sign_handbook != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (parent_handbook.child_id, 3, 3, 2))
+                parent_handbook_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(parent_handbook_sql, (parent_handbook.child_id, 3, 3, 2))
                 connection.commit()
 
             elif(parent_handbook.parent_sign_handbook != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (parent_handbook.child_id, 3, 3, 1))
+                parent_handbook_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(parent_handbook_sql, (parent_handbook.child_id, 3, 3, 1))
                 connection.commit()
 
             return {"message": f"Parent handbook with id {id} updated successfully"}
@@ -2743,6 +2746,12 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
     try:
         with connection.cursor() as cursor:
 
+            parent_invite_chk_sql = "CALL spGetParentInvite(%s)"
+            cursor.execute(parent_invite_chk_sql, (parent_invite.invite_email,))
+            parent_invite_chk_sql_result = cursor.fetchone() 
+            if parent_invite_chk_sql_result:
+                return {"error": "Already we send an mail. Please try different email"}
+            
             parent_check_sql = "CALL spGetParentEmail(%s)"
             cursor.execute(parent_check_sql, (parent_invite.invite_email,))
             parent_check_result = cursor.fetchone() 
@@ -3179,7 +3188,7 @@ def get_class_based_child_count(class_id: int):
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"Child count with class id {class_id} not found")
+                return []
     except pymysql.MySQLError as err:
         print(f"Error fetching emergency detail: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -3201,7 +3210,7 @@ def get_child_count_with_class_name():
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"Child count not found")
+                return []
     except pymysql.MySQLError as err:
         print(f"Error fetching emergency detail: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -3380,7 +3389,7 @@ def get_form_based_child_count(form_id: int):
             if result:
                 return result
             else:
-                raise HTTPException(status_code=404, detail=f"No one entry is in the form id - {form_id}")
+                return []
     except pymysql.MySQLError as err:
         print(f"Error fetching emergency detail: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -3560,13 +3569,13 @@ class AdmissionFormUpdate(BaseModel):
     rest_routine: Optional[str] = None
     toilet_trained: Optional[bool] = None
     reason_for_toilet_trained: Optional[str] = None
-    explain_for_existing_illness_allergy: Optional[bool] = None
-    existing_illness_allergy: Optional[str] = None
+    explain_for_existing_illness_allergy: Optional[str] = None
+    existing_illness_allergy: Optional[bool] = None
     functioning_at_age: Optional[bool] = None
     explain_for_functioning_at_age: Optional[str] = None
-    explain_able_to_walk: Optional[str] = None
+    explain_for_able_to_walk: Optional[str] = None
     able_to_walk: Optional[bool] = None
-    explain_communicate_their_needs: Optional[bool] = None
+    explain_for_communicate_their_needs: Optional[str] = None
     communicate_their_needs: Optional[bool] = None
     any_medication: Optional[bool] = None
     explain_for_any_medication: Optional[str] = None
@@ -3587,7 +3596,7 @@ class AdmissionFormUpdate(BaseModel):
     med_technicians_med_transportation_waiver: Optional[str] = None
     medical_transportation_waiver: Optional[str] = None
     do_you_agree_this_health_policies: Optional[str] = None
-    parent_sign_admission_outside_waiver: Optional[str] = None
+    parent_sign_outside_waiver: Optional[str] = None
     approve_social_media_post: Optional[bool] = None
     printed_name_social_media_post: Optional[str] = None
     do_you_agree_this_social_media_post: Optional[str] = None
@@ -3625,7 +3634,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
             if admission_form.child_dentist_info is not None:
                 dentist = admission_form.child_dentist_info
 
-                if dentist.child_dentist_id is not None and dentist.child_dentist_name is not None:
+                if dentist.child_dentist_id is not None and (dentist.child_dentist_name is not None or dentist.dentist_telephone_number is not None or dentist.dentist_street_address is not None or dentist.dentist_city_address is not None or dentist.dentist_state_address is not None or dentist.dentist_zip_address is not None):
                     dentist_sql = """
                     CALL spUpdateDentist(%s, %s, %s, %s, %s, %s, %s);
                     """
@@ -3646,7 +3655,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                         child_id,
                         dentist.child_dentist_id
                     ))   
-                elif dentist.child_dentist_id is None and dentist.child_dentist_name is not None:
+                elif dentist.child_dentist_id is None and (dentist.child_dentist_name is not None or dentist.dentist_telephone_number is not None or dentist.dentist_street_address is not None or dentist.dentist_city_address is not None or dentist.dentist_state_address is not None or dentist.dentist_zip_address is not None):
                     child_dentist_id = None
                     d_sql = """
                     CALL spCreateDentistReturnId(%s, %s, %s, %s, %s, %s, @child_dentist_id);
@@ -3676,7 +3685,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
 
             if admission_form.child_care_provider_info is not None:
                 careprovider = admission_form.child_care_provider_info
-                if careprovider.child_care_provider_id is not None and careprovider.child_care_provider_name is not None:
+                if careprovider.child_care_provider_id is not None and (careprovider.child_care_provider_name is not None or careprovider.child_care_provider_telephone_number is not None or careprovider.child_hospital_affiliation is not None or careprovider.child_care_provider_street_address is not None or careprovider.child_care_provider_city_address is not None or careprovider.child_care_provider_state_address is not None or careprovider.child_care_provider_zip_address is not None):
                     careprovider_sql = "CALL spUpdateCareProvider(%s, %s, %s, %s, %s, %s, %s, %s);"
                     cursor.execute(careprovider_sql, (
                         careprovider.child_care_provider_id,
@@ -3694,7 +3703,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                         child_id,
                         careprovider.child_care_provider_id
                     ))
-                elif careprovider.child_care_provider_id is  None and careprovider.child_care_provider_name is not None:
+                elif careprovider.child_care_provider_id is  None and (careprovider.child_care_provider_name is not None or careprovider.child_care_provider_telephone_number is not None or careprovider.child_hospital_affiliation is not None or careprovider.child_care_provider_street_address is not None or careprovider.child_care_provider_city_address is not None or careprovider.child_care_provider_state_address is not None or careprovider.child_care_provider_zip_address is not None):
                     child_care_provider_id = None
                     cp_sql = """
                     CALL spCreateCareProviderReturnId(%s, %s, %s, %s, %s, %s, %s, @child_care_provider_id);
@@ -3735,7 +3744,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
 
             if admission_form.additional_parent_info is not None:
                 parentinfo = admission_form.additional_parent_info
-                if parentinfo.parent_id is not None and parentinfo.parent_email is not None:
+                if parentinfo.parent_id is not None and (parentinfo.parent_email is not None or parentinfo.parent_name is not None or parentinfo.parent_street_address is not None or parentinfo.parent_city_address is not None or parentinfo.parent_state_address is not None or parentinfo.parent_zip_address is not None or parentinfo.home_telephone_number is not None or parentinfo.business_name is not None or parentinfo.work_hours_from is not None or parentinfo.work_hours_to is not None or parentinfo.business_telephone_number is not None or parentinfo.business_cell_number is not None):
                     parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                     cursor.execute(parentinfo_sql, (
                         parentinfo.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
@@ -3751,9 +3760,8 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                         child_id,
                         parentinfo.parent_id
                     ))
-                elif parentinfo.parent_id is None and parentinfo.parent_email is not None:
+                elif parentinfo.parent_id is None and (parentinfo.parent_email is not None or parentinfo.parent_name is not None or parentinfo.parent_street_address is not None or parentinfo.parent_city_address is not None or parentinfo.parent_state_address is not None or parentinfo.parent_zip_address is not None or parentinfo.home_telephone_number is not None or parentinfo.business_name is not None or parentinfo.work_hours_from is not None or parentinfo.work_hours_to is not None or parentinfo.business_telephone_number is not None or parentinfo.business_cell_number is not None):
                     parent_id = None
-
                     ap_sql = "CALL spCreateParentInfoReturnId(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, @parent_id)"
                     cursor.execute(ap_sql, (
                         parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
@@ -3763,7 +3771,6 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                         parentinfo.business_city_address, parentinfo.business_state_address, parentinfo.business_zip_address,
                         parentinfo.business_cell_number, parentinfo.password
                     ))
-                    
                     # Retrieve the additional_parent_id from the output variable
                     cursor.execute("SELECT @parent_id AS parent_id;")
                     result = cursor.fetchone()
@@ -3782,7 +3789,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
 
                 for emergencydetail in emergency_contact_info:
                     if emergencydetail != {}:
-                        if emergencydetail.child_emergency_contact_id is not None and emergencydetail.child_emergency_contact_name is not None:
+                        if emergencydetail.child_emergency_contact_id is not None and (emergencydetail.child_emergency_contact_name is not None or emergencydetail.child_emergency_contact_relationship is not None or emergencydetail.child_emergency_contact_full_address is not None or emergencydetail.child_emergency_contact_city_address is not None or emergencydetail.child_emergency_contact_state_address is not None or emergencydetail.child_emergency_contact_zip_address is not None or emergencydetail.child_emergency_contact_telephone_number is not None):
                             emergency_contact_sql = "CALL spUpdateEmergencyDetail(%s, %s, %s, %s, %s, %s, %s, %s);"
                             cursor.execute(emergency_contact_sql, (
                                 emergencydetail.child_emergency_contact_id,
@@ -3801,7 +3808,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                                 emergencydetail.child_emergency_contact_id,
                                 index
                             ))
-                        elif emergencydetail.child_emergency_contact_id is None and emergencydetail.child_emergency_contact_name is not None:
+                        elif emergencydetail.child_emergency_contact_id is None and (emergencydetail.child_emergency_contact_name is not None or emergencydetail.child_emergency_contact_relationship is not None or emergencydetail.child_emergency_contact_full_address is not None or emergencydetail.child_emergency_contact_city_address is not None or emergencydetail.child_emergency_contact_state_address is not None or emergencydetail.child_emergency_contact_zip_address is not None or emergencydetail.child_emergency_contact_telephone_number is not None):
                             child_emergency_contact_id = None
                             ec_sql = "CALL spCreateEmergencyDetailReturnId(%s, %s, %s, %s, %s, %s, %s, @child_emergency_contact_id);"
                             cursor.execute(ec_sql, (
@@ -3872,8 +3879,8 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                 admission_form.reason_for_rest_in_the_middle_day, admission_form.rest_routine, admission_form.toilet_trained,
                 admission_form.reason_for_toilet_trained, admission_form.explain_for_existing_illness_allergy,
                 admission_form.existing_illness_allergy, admission_form.functioning_at_age,
-                admission_form.explain_for_functioning_at_age, admission_form.explain_able_to_walk,
-                admission_form.able_to_walk, admission_form.explain_communicate_their_needs,
+                admission_form.explain_for_functioning_at_age, admission_form.explain_for_able_to_walk,
+                admission_form.able_to_walk, admission_form.explain_for_communicate_their_needs,
                 admission_form.communicate_their_needs, admission_form.any_medication,
                 admission_form.explain_for_any_medication, admission_form.utilize_special_equipment,
                 admission_form.explain_for_utilize_special_equipment, admission_form.significant_periods,
@@ -3884,19 +3891,19 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                 admission_form.photo_permission_agree_group_photos_electronic, admission_form.do_you_agree_this_photo_video_permission_form,
                 admission_form.security_release_policy_form, admission_form.med_technicians_med_transportation_waiver,
                 admission_form.medical_transportation_waiver, admission_form.do_you_agree_this_health_policies,
-                admission_form.parent_sign_admission_outside_waiver, admission_form.approve_social_media_post,
+                admission_form.parent_sign_outside_waiver, admission_form.approve_social_media_post,
                 admission_form.printed_name_social_media_post, admission_form.do_you_agree_this_social_media_post,
                 admission_form.parent_sign_admission, admission_form.admin_sign_admission, admission_form.emergency_contact_first_id, admission_form.emergency_contact_second_id, admission_form.emergency_contact_third_id,admission_form.pointer, admission_form.agree_all_above_info_is_correct
             ))
             connection.commit()
             if(admission_form.admin_sign_admission != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
-                cursor.execute(auth_form_sql, (admission_form.child_id, 1, 1, 2))
+                admission_form_sql = "CALL spUpdateStudentFormRepository(%s, %s, %s, %s);"
+                cursor.execute(admission_form_sql, (admission_form.child_id, 1, 1, 2))
                 connection.commit()
                 
             elif(admission_form.parent_sign_admission != None):
-                auth_form_sql = "CALL spUpdateStudentFormRepository(%s,%s, %s, %s);"
-                cursor.execute(auth_form_sql, (admission_form.child_id, 1, 1, 1))
+                admission_form_sql = "CALL spUpdateStudentFormRepository(%s,%s, %s, %s);"
+                cursor.execute(admission_form_sql, (admission_form.child_id, 1, 1, 1))
                 connection.commit()
 
             
