@@ -1413,8 +1413,8 @@ class AdmissionForm(BaseModel):
     nick_name: Optional[str] = None
     primary_language: Optional[str] = None
     school_age_child_school: Optional[str] = None
-    do_relevant_custody_papers_apply: Optional[bool] = None
-    gender: Optional[str] = None
+    do_relevant_custody_papers_apply: Optional[int] = None
+    gender: Optional[int] = None
     special_diabilities: Optional[str] = None
     allergies_medication_reaction: Optional[str] = None
     additional_info: Optional[str] = None
@@ -1448,8 +1448,8 @@ class AdmissionForm(BaseModel):
     birth_weight_lbs: Optional[str] = None
     birth_weight_oz: Optional[str] = None
     complications: Optional[str] = None
-    bottle_fed: Optional[str] = None
-    breast_fed: Optional[str] = None
+    bottle_fed: Optional[int] = None
+    breast_fed: Optional[int] = None
     other_siblings_name: Optional[str] = None
     other_siblings_age: Optional[str] = None
     family_history_allergies: Optional[str] = None
@@ -1481,36 +1481,36 @@ class AdmissionForm(BaseModel):
     do_you_agree_this_immunization_instructions: Optional[str] = None
     important_fam_members: Optional[str] = None
     about_family_celebrations: Optional[str] = None
-    childcare_before: Optional[bool] = None
+    childcare_before: Optional[int] = None
     reason_for_childcare_before: Optional[str] = None
     what_child_interests: Optional[str] = None
     drop_off_time: Optional[str] = None
     pick_up_time: Optional[str] = None
-    restricted_diet: Optional[bool] = None
+    restricted_diet: Optional[int] = None
     restricted_diet_reason: Optional[str] = None
-    eat_own: Optional[bool] = None
+    eat_own: Optional[int] = None
     eat_own_reason: Optional[str] = None
     favorite_foods: Optional[str] = None
-    rest_in_the_middle_day: Optional[bool] = None
+    rest_in_the_middle_day: Optional[int] = None
     reason_for_rest_in_the_middle_day: Optional[str] = None
     rest_routine: Optional[str] = None
-    toilet_trained: Optional[bool] = None
+    toilet_trained: Optional[int] = None
     reason_for_toilet_trained: Optional[str] = None
     explain_for_existing_illness_allergy: Optional[str] = None
-    existing_illness_allergy: Optional[bool] = None
-    functioning_at_age: Optional[bool] = None
+    existing_illness_allergy: Optional[int] = None
+    functioning_at_age: Optional[int] = None
     explain_for_functioning_at_age: Optional[str] = None
     explain_for_able_to_walk: Optional[str] = None
-    able_to_walk: Optional[bool] = None
+    able_to_walk: Optional[int] = None
     explain_for_communicate_their_needs: Optional[str] = None
-    communicate_their_needs: Optional[bool] = None
-    any_medication: Optional[bool] = None
+    communicate_their_needs: Optional[int] = None
+    any_medication: Optional[int] = None
     explain_for_any_medication: Optional[str] = None
-    utilize_special_equipment: Optional[bool] = None
+    utilize_special_equipment: Optional[int] = None
     explain_for_utilize_special_equipment: Optional[str] = None
-    significant_periods: Optional[bool] = None
+    significant_periods: Optional[int] = None
     explain_for_significant_periods: Optional[str] = None
-    desire_any_accommodations: Optional[bool] = None
+    desire_any_accommodations: Optional[int] = None
     explain_for_desire_any_accommodations: Optional[str] = None
     additional_information: Optional[str] = None
     do_you_agree_this: Optional[str] = None
@@ -1524,7 +1524,7 @@ class AdmissionForm(BaseModel):
     medical_transportation_waiver: Optional[str] = None
     do_you_agree_this_health_policies: Optional[str] = None
     parent_sign_outside_waiver: Optional[str] = None
-    approve_social_media_post: Optional[bool] = None
+    approve_social_media_post: Optional[int] = None
     printed_name_social_media_post: Optional[str] = None
     do_you_agree_this_social_media_post: Optional[str] = None
     parent_sign_admission: Optional[str] = None
@@ -2527,7 +2527,7 @@ async def get_personal_info_all_incomplete_form_status(id: int):
                         cursor.execute(form_name_get_sql, data["form_id"])
 
                         form_detail = cursor.fetchone()
-                        incomplete_form_list.append(form_detail["main_topic"])
+                        incomplete_form_list.append(form_detail["form_name"])
                 return {
                     "InCompletedFormStatus": incomplete_form_list
                 }
@@ -2563,7 +2563,7 @@ async def get_personal_info_all_complete_form_status(id: int):
                         cursor.execute(time_stamp_get_sql, id)
                         time_stamp_detail = cursor.fetchone()
                         
-                        incomplete_form_list.append({"formname" : form_detail["main_topic"], "completedTimestamp": time_stamp_detail["admin_sign_date_admission"]})
+                        incomplete_form_list.append({"formname" : form_detail["form_name"], "completedTimestamp": time_stamp_detail["admin_sign_date_admission"]})
                 return {
                     "CompletedFormStatus": incomplete_form_list
                 }
@@ -2596,11 +2596,11 @@ async def get_personal_info_all__form_status(id: int):
 
                     form_detail = cursor.fetchone()
                     if(data["form_status"] == 0):
-                        incomplete_form_list.append(form_detail["main_topic"])
+                        incomplete_form_list.append(form_detail["form_name"])
                     elif(data["form_status"] == 2):
-                        completed_form_list.append(form_detail["main_topic"])
+                        completed_form_list.append(form_detail["form_name"])
                     else:
-                        pending_form_list.append(form_detail["main_topic"])
+                        pending_form_list.append(form_detail["form_name"])
                 return {
                     "Completed Forms": completed_form_list,
                     "Incomplete Forms": incomplete_form_list,
@@ -2989,9 +2989,7 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
                 res2 = cursor.fetchone()
 
                 if res2 and res2["parent_email"] != None:
-                    return {"error" : "Already registered with another mail-id. (Invalid URL)"}
-            
-            
+                    return {"error" : "Already registered with another mail-id. (Invalid URL)"}  
 
             mail_list_get_sql = "CALL spGetAllSignUpAndInviteEmails();"
             cursor.execute(mail_list_get_sql, )
@@ -3074,8 +3072,21 @@ async def get_all_invite_status():
         with connection.cursor() as cursor:
             sql = "CALL spGetInviteStatus();"
             cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
+            all_result = cursor.fetchall()
+
+            sql2 = "CALL spGetActiveInviteStatus();"
+            cursor.execute(sql2)
+            active_result = cursor.fetchall()
+
+            sql3 = "CALL spGetArchiveInviteStatus();"
+            cursor.execute(sql3)
+            archive_result = cursor.fetchall()
+
+            return {
+                "All": all_result,
+                "Active": active_result,
+                "Archive": archive_result
+            }
     except pymysql.MySQLError as err:
         print(f"Error fetching student-form links: {err}")
         raise HTTPException(status_code=500, detail={"error": "DB error"})
@@ -3498,8 +3509,8 @@ class AdmissionFormUpdate(BaseModel):
     nick_name: Optional[str] = None
     primary_language: Optional[str] = None
     school_age_child_school: Optional[str] = None
-    do_relevant_custody_papers_apply: Optional[bool] = None
-    gender: Optional[str] = None
+    do_relevant_custody_papers_apply: Optional[int] = None
+    gender: Optional[int] = None
     special_diabilities: Optional[str] = None
     allergies_medication_reaction: Optional[str] = None
     additional_info: Optional[str] = None
@@ -3533,8 +3544,8 @@ class AdmissionFormUpdate(BaseModel):
     birth_weight_lbs: Optional[str] = None
     birth_weight_oz: Optional[str] = None
     complications: Optional[str] = None
-    bottle_fed: Optional[bool] = None
-    breast_fed: Optional[bool] = None
+    bottle_fed: Optional[int] = None
+    breast_fed: Optional[int] = None
     other_siblings_name: Optional[str] = None
     other_siblings_age: Optional[str] = None
     family_history_allergies: Optional[str] = None
@@ -3566,36 +3577,36 @@ class AdmissionFormUpdate(BaseModel):
     do_you_agree_this_immunization_instructions: Optional[str] = None
     important_fam_members: Optional[str] = None
     about_family_celebrations: Optional[str] = None
-    childcare_before: Optional[bool] = None
+    childcare_before: Optional[int] = None
     reason_for_childcare_before: Optional[str] = None
     what_child_interests: Optional[str] = None
     drop_off_time: Optional[str] = None
     pick_up_time: Optional[str] = None
-    restricted_diet: Optional[bool] = None
+    restricted_diet: Optional[int] = None
     restricted_diet_reason: Optional[str] = None
-    eat_own: Optional[bool] = None
+    eat_own: Optional[int] = None
     eat_own_reason: Optional[str] = None
     favorite_foods: Optional[str] = None
-    rest_in_the_middle_day: Optional[bool] = None
+    rest_in_the_middle_day: Optional[int] = None
     reason_for_rest_in_the_middle_day: Optional[str] = None
     rest_routine: Optional[str] = None
-    toilet_trained: Optional[bool] = None
+    toilet_trained: Optional[int] = None
     reason_for_toilet_trained: Optional[str] = None
     explain_for_existing_illness_allergy: Optional[str] = None
-    existing_illness_allergy: Optional[bool] = None
-    functioning_at_age: Optional[bool] = None
+    existing_illness_allergy: Optional[int] = None
+    functioning_at_age: Optional[int] = None
     explain_for_functioning_at_age: Optional[str] = None
     explain_for_able_to_walk: Optional[str] = None
-    able_to_walk: Optional[bool] = None
+    able_to_walk: Optional[int] = None
     explain_for_communicate_their_needs: Optional[str] = None
-    communicate_their_needs: Optional[bool] = None
-    any_medication: Optional[bool] = None
+    communicate_their_needs: Optional[int] = None
+    any_medication: Optional[int] = None
     explain_for_any_medication: Optional[str] = None
-    utilize_special_equipment: Optional[bool] = None
+    utilize_special_equipment: Optional[int] = None
     explain_for_utilize_special_equipment: Optional[str] = None
-    significant_periods: Optional[bool] = None
+    significant_periods: Optional[int] = None
     explain_for_significant_periods: Optional[str] = None
-    desire_any_accommodations: Optional[bool] = None
+    desire_any_accommodations: Optional[int] = None
     explain_for_desire_any_accommodations: Optional[str] = None
     additional_information: Optional[str] = None
     do_you_agree_this: Optional[str] = None
@@ -3609,7 +3620,7 @@ class AdmissionFormUpdate(BaseModel):
     medical_transportation_waiver: Optional[str] = None
     do_you_agree_this_health_policies: Optional[str] = None
     parent_sign_outside_waiver: Optional[str] = None
-    approve_social_media_post: Optional[bool] = None
+    approve_social_media_post: Optional[int] = None
     printed_name_social_media_post: Optional[str] = None
     do_you_agree_this_social_media_post: Optional[str] = None
     parent_sign_admission: Optional[str] = None
@@ -4213,6 +4224,246 @@ def get_all_parent_info():
         return {"error": f"Primary parent not found"}
     finally:
         connection.close()
+
+def convert_keys_to_int(d): 
+    return {k: int(v) for k, v in d.items()}
+
+@app.get("/get_all_form_details")
+async def get_all_form_details():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL GetConsolidatedFormData();"
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+            # Parse the JSON result from the stored procedure
+            consolidated_data = json.loads(result["consolidated_form_data"]) 
+
+            # Convert keys to integers for each dictionary in consolidated_data
+            for key in consolidated_data: 
+                consolidated_data[key] = convert_keys_to_int(json.loads(consolidated_data[key]))
+
+            return consolidated_data
+    
+    except pymysql.MySQLError as err:
+        print(f"Error fetching form info: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    
+    finally:
+        if connection:
+            connection.close()
+
+class UpdateFormRequest(BaseModel):
+    form_ids: List[int]
+    state: int
+      
+
+@app.put("/update_form_repo_state")
+def update_forms(request: UpdateFormRequest):
+    # Convert list of form_ids to a comma-separated string
+    form_ids_str = ",".join(map(str, request.form_ids))
+
+    # Connect to the database
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            # Prepare the stored procedure call
+            sql = "CALL UpdateFormRepoFormState(%s, %s);"
+            cursor.execute(sql, (form_ids_str, request.state))
+            print("ffgfgfg")
+            connection.commit()
+            return {"message": "Forms updated successfully"}
+    except pymysql.MySQLError:
+        raise HTTPException(status_code=500, detail="Error updating forms")
+    finally:
+        connection.close()
+
+class DataModel(BaseModel): 
+    form_ids: List[int] 
+    class_ids: List[int]
+
+@app.post("/class_repo_update")
+async def create_or_update(data: DataModel):
+
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+
+            sql = "CALL spGetAllClassFormRepository();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+            for form_id in data.form_ids:
+                for class_id in data.class_ids:
+                    temp = {
+                        "class_id": class_id,
+                        "form_id": form_id,
+                        "is_active": True
+                    }
+                    if temp not in result:
+                        create_sql = "CALL spCreateClassFormRepository(%s, %s);"
+                        cursor.execute(create_sql, (class_id, form_id))
+                        connection.commit()
+
+                        class_based_child_sql = "CALL spGetAllClassRoomBasedChildIds(%s);"
+                        cursor.execute(class_based_child_sql,(class_id))
+                        class_based_child_details_result = cursor.fetchall()
+
+                        if class_based_child_details_result:
+                            for child_det in class_based_child_details_result:
+                                std_form_repo_sql = "CALL spGetAllStudentFormRepoChildIDs();"
+                                cursor.execute(std_form_repo_sql)
+                                std_form_repo_sql_result = cursor.fetchall()
+
+                                if std_form_repo_sql_result:
+                                    child_id = child_det["child_id"]
+                                    temp_data = {
+                                        "child_id": child_id,
+                                        "form_id": form_id
+                                    }
+
+                                    if temp_data not in std_form_repo_sql_result:
+                                        sql = "CALL spCreateStudentFormRepository(%s, %s, %s);"
+                                        cursor.execute(sql, (child_id, form_id, 0))
+                                        connection.commit()
+
+                                        if(form_id == 1):
+                                            cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
+                                            connection.commit()
+
+                                        elif(form_id == 2):
+                                            cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
+                                            connection.commit()
+                                        elif(form_id == 3):
+                                            cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
+                                            connection.commit()
+                                        elif(form_id == 4):
+                                            cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
+                                            connection.commit()
+                                else:
+                                    sql = "CALL spCreateStudentFormRepository(%s, %s, %s);"
+                                    cursor.execute(sql, (child_id, form_id, 0))
+                                    connection.commit()
+
+                                    if(form_id == 1):
+                                        cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
+                                        connection.commit()
+
+                                    elif(form_id == 2):
+                                        cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
+                                        connection.commit()
+                                    elif(form_id == 3):
+                                        cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
+                                        connection.commit()
+                                    elif(form_id == 4):
+                                        cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
+                                        connection.commit()
+
+            return {"message": "Data processed successfully"}
+    except pymysql.MySQLError as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Error updating forms")
+    finally:
+        connection.close()
+
+class StudentDataModel(BaseModel): 
+    form_ids: List[int] 
+    child_ids: List[int]
+
+@app.post("/student_repo_update")
+async def create_or_update(data: StudentDataModel):
+
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            for form_id in data.form_ids:
+                for child_id in data.child_ids:
+                    temp_data = {
+                        "child_id": child_id,
+                        "form_id": form_id
+                    }
+
+                    std_form_repo_sql = "CALL spGetAllStudentFormRepoChildIDs();"
+                    cursor.execute(std_form_repo_sql)
+                    std_form_repo_sql_result = cursor.fetchall()
+
+                    if std_form_repo_sql_result:
+                        if temp_data not in std_form_repo_sql_result:
+                            sql = "CALL spCreateStudentFormRepository(%s, %s, %s);"
+                            cursor.execute(sql, (child_id, form_id, 0))
+                            connection.commit()
+
+                            if(form_id == 1):
+                                cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
+                                connection.commit()
+
+                            elif(form_id == 2):
+                                cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
+                                connection.commit()
+                            elif(form_id == 3):
+                                cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
+                                connection.commit()
+                            elif(form_id == 4):
+                                cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
+                                connection.commit()
+                    else:
+                        sql = "CALL spCreateStudentFormRepository(%s, %s, %s);"
+                        cursor.execute(sql, (child_id, form_id, 0))
+                        connection.commit()
+
+                        if(form_id == 1):
+                            cursor.execute("CALL spCreateEmptyAdmissionForm(%s)", child_id)
+                            connection.commit()
+
+                        elif(form_id == 2):
+                            cursor.execute("CALL spCreateEmptyAuthorizationForm(%s)", child_id)
+                            connection.commit()
+                        elif(form_id == 3):
+                            cursor.execute("CALL spCreateEmptyParentHandbook(%s)", child_id)
+                            connection.commit()
+                        elif(form_id == 4):
+                            cursor.execute("CALL spCreateEmptyEnrollmentForm(%s)", child_id)
+                            connection.commit()
+
+            return {"message": "Data processed successfully"}
+    except pymysql.MySQLError as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Error updating forms")
+    finally:
+        connection.close()
+
+@app.put("/update_parent_status_as_archive/{parent_id}")
+async def update_parenr_status(parent_id: int):
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spUpdateParentAsArchive(%s);"
+            cursor.execute(sql, (parent_id))
+            connection.commit()
+
+            return {"message": f"Parent status with parent_id {parent_id} updated successfully"}
+    except pymysql.MySQLError as err:
+        print(f"Error updating signup_info: {err}")
+        return {"error": f"Parent status with parent_id {parent_id} update call failed (DB Error)"}
+    finally:
+        if connection:
+            connection.close()
 
   
 handler=mangum.Mangum(app)
