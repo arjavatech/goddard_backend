@@ -4465,5 +4465,35 @@ async def update_parenr_status(parent_id: int):
         if connection:
             connection.close()
 
+@app.get("/class_wise_child_details")  
+async def get_all_classes():
+    connection = connect_to_database()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Failed to connect to database")
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "CALL spGetAllClass();"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            if result:
+             result_list ={}
+             for class_det in result:
+                class_det_sql = "CALL spGetAllClassRoomBasedChildDetails(%s);"
+                cursor.execute(class_det_sql,(class_det["class_id"]))
+                class_det_result = cursor.fetchall()
+                if class_det_result:
+                    result_list[class_det["class_id"]] =  class_det_result
+             return result_list
+            else:
+                return []
+    except pymysql.MySQLError as err:
+        print(f"Error fetching classes: {err}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        if connection:
+            connection.close()
+
+
   
 handler=mangum.Mangum(app)
