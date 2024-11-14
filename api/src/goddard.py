@@ -2532,7 +2532,9 @@ async def get_personal_info_all_incomplete_form_status(id: int):
                     "InCompletedFormStatus": incomplete_form_list
                 }
             else:
-                raise HTTPException(status_code=404, detail=f"InCompletedFormStatus for the child id {id} not found")
+                return {
+                    "InCompletedFormStatus": incomplete_form_list
+                }
     except pymysql.MySQLError as err:
         print(f"Error fetching authorization form: {err}")
         raise HTTPException(status_code=500, detail="Database error")
@@ -2551,7 +2553,8 @@ async def get_personal_info_all_complete_form_status(id: int):
             sql = "CALL spGetStudentFormRepository(%s);"
             cursor.execute(sql, (id,))
             result = cursor.fetchall()
-            incomplete_form_list = []
+            complete_form_list = []
+
             if result:
                 for data in result:
                     if(data["form_status"] == 2):
@@ -2562,13 +2565,23 @@ async def get_personal_info_all_complete_form_status(id: int):
                         time_stamp_get_sql = "CALL spGetAdmissionForm(%s);"
                         cursor.execute(time_stamp_get_sql, id)
                         time_stamp_detail = cursor.fetchone()
-                        
-                        incomplete_form_list.append({"formname" : form_detail["form_name"], "completedTimestamp": time_stamp_detail["admin_sign_date_admission"]})
+
+                        if data["form_id"] == 1:
+                           complete_form_list.append({"formname" : form_detail["form_name"], "completedTimestamp": time_stamp_detail["admin_sign_date_admission"]})
+                        elif data["form_id"] == 2:
+                           complete_form_list.append({"formname" : form_detail["form_name"], "completedTimestamp": time_stamp_detail["admin_sign_date_ach"]})
+                        elif data["form_id"] == 3:
+                           complete_form_list.append({"formname" : form_detail["form_name"], "completedTimestamp": time_stamp_detail["admin_sign_date_handbook"]})
+                        elif data["form_id"] == 4:
+                           complete_form_list.append({"formname" : form_detail["form_name"], "completedTimestamp": time_stamp_detail["admin_sign_date_enroll"]})
+                
                 return {
-                    "CompletedFormStatus": incomplete_form_list
+                    "CompletedFormStatus": complete_form_list
                 }
             else:
-                return []
+                return {
+                    "CompletedFormStatus": complete_form_list
+                }
     except pymysql.MySQLError as err:
         raise HTTPException(status_code=500, detail="Database error")
     finally:
