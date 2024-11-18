@@ -4458,16 +4458,17 @@ async def create_or_update(data: StudentDataModel):
     finally:
         connection.close()
 
-@app.put("/update_parent_status_as_archive/{parent_id}")
-async def update_parenr_status(parent_id: int):
+@app.put("/update_parent_info_status/{parent_id}")
+async def update_parenr_status(parent_id: int, request: dict= Body(...)):
     connection = connect_to_database()
+    status = request.get("status")
     if not connection:
         raise HTTPException(status_code=500, detail="Failed to connect to database")
 
     try:
         with connection.cursor() as cursor:
-            sql = "CALL spUpdateParentAsArchive(%s);"
-            cursor.execute(sql, (parent_id))
+            sql = "CALL spUpdateParentInfoStatus(%s, %s);"
+            cursor.execute(sql, (parent_id, status))
             connection.commit()
 
             return {"message": f"Parent status with parent_id {parent_id} updated successfully"}
