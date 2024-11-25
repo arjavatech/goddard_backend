@@ -3685,6 +3685,13 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                         dentist.dentist_state_address,
                         dentist.dentist_zip_address
                     ))
+                    dentist_sql_2 = """
+                    CALL spUpdateDentistIdOnly(%s, %s);
+                    """
+                    cursor.execute(dentist_sql_2, (
+                        child_id,
+                        dentist.child_dentist_id
+                    ))
                 elif dentist.child_dentist_id is not None and dentist.child_dentist_name is None:
                     dentist_sql = """
                     CALL spUpdateDentistIdOnly(%s, %s);
