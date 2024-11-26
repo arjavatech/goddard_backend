@@ -1620,17 +1620,8 @@ END
                                                         --Parent Handbook CRUD--(missing)
 
 --Create record
-CREATE DEFINER=`admin`@`%` PROCEDURE `spCreateEmptyParentHandbook`(
-    IN p_child_id INT
-)
-BEGIN
-    INSERT INTO parent_handbook (
-        child_id
-    ) VALUES (
-        p_child_id
-    );
-END
 
+	
 --Retrieve record based on child id
 CREATE DEFINER=`admin`@`%` PROCEDURE `spGetParentHandbook`(
     IN p_childId INT
