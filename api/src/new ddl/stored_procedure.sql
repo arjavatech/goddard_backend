@@ -1339,7 +1339,7 @@ BEGIN
 END
 
 
---Authorization Form CRUD--
+                                                            --Authorization Form CRUD--
 
 --Create record
 CREATE DEFINER=`admin`@`%` PROCEDURE `spCreateAuthorizationForm`(
@@ -1364,21 +1364,359 @@ BEGIN
     );
 END
 
---Retrieve record based on email-id
-
+--Retrieve record based on child id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spGetAuthorizationForm`(
+    IN p_childId INT
+)
+BEGIN
+    SELECT * FROM authorization_form
+    WHERE child_id = p_childId AND is_active = TRUE;
+END
 
 --Retrieve all records
+CREATE DEFINER=`admin`@`%` PROCEDURE `spGetAllAdmissionForms`()
+BEGIN
+    SELECT * 
+    FROM admission_form 
+    WHERE is_active = TRUE;
+END
+
+--Update record based on child id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spUpdateAuthorizationForm`(
+    IN p_childId INT,
+    IN p_bankRoutingAch VARCHAR(255),
+    IN p_bankAccountAch VARCHAR(255),
+    IN p_driverLicenseAch VARCHAR(255),
+    IN p_stateAch VARCHAR(255),
+    IN p_iAch VARCHAR(255),
+    IN p_parentSignAch VARCHAR(255),
+    IN p_adminSignAch VARCHAR(255),
+    IN p_parent_sign_date_ach VARCHAR(255),
+    IN p_admin_sign_date_ach VARCHAR(255)
+)
+BEGIN
+    UPDATE authorization_form
+    SET 
+        bank_routing = COALESCE(p_bankRoutingAch, bank_routing),
+        bank_account = COALESCE(p_bankAccountAch, bank_account),
+        driver_license = COALESCE(p_driverLicenseAch, driver_license),
+        state = COALESCE(p_stateAch, state),
+        i = COALESCE(p_iAch, i),
+        parent_sign_ach = COALESCE(p_parentSignAch, parent_sign_ach),
+        admin_sign_ach = COALESCE(p_adminSignAch, admin_sign_ach),
+        parent_sign_date_ach = COALESCE(p_parent_sign_date_ach, parent_sign_date_ach),
+        admin_sign_date_ach = COALESCE(p_admin_sign_date_ach, admin_sign_date_ach)
+        
+    WHERE 
+        child_id = p_childId AND is_active = TRUE;
+END
+
+--Delete record based on child id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spDeleteAuthorizationForm`(
+    IN p_childId INT
+)
+BEGIN
+    UPDATE authorization_form
+    SET is_active = FALSE
+    WHERE child_id = p_childId;
+END
 
 
---Update record based on email-id
+                                                            --Enrollment Form CRUD--
 
-
---Delete record based on email-id
-
-
---Parent Invite CRUD--
 --Create record
---Retrieve record based on email-id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spCreateEnrollmentForm`(
+    IN p_childId INT,
+    IN p_enrollmentName VARCHAR(255),
+    IN p_pointOneFieldThree VARCHAR(255),
+    IN p_pointTwoInitialHere VARCHAR(255),
+    IN p_pointThreeInitialHere VARCHAR(255),
+    IN p_pointFourInitialHere VARCHAR(255),
+    IN p_pointFiveInitialHere VARCHAR(255),
+    IN p_pointSixInitialHere VARCHAR(255),
+    IN p_pointSevenInitialHere VARCHAR(255),
+    IN p_pointEightInitialHere VARCHAR(255),
+    IN p_pointNineInitialHere VARCHAR(255),
+    IN p_pointTenInitialHere VARCHAR(255),
+    IN p_pointElevenInitialHere VARCHAR(255),
+    IN p_pointTwelveInitialHere VARCHAR(255),
+    IN p_pointThirteenInitialHere VARCHAR(255),
+    IN p_pointFourteenInitialHere VARCHAR(255),
+    IN p_pointFifteenInitialHere VARCHAR(255),
+    IN p_pointSixteenInitialHere VARCHAR(255),
+    IN p_pointSeventeenInitialHere VARCHAR(255),
+    IN p_pointEighteenInitialHere VARCHAR(255),
+    IN p_point_ninteen_initial_here VARCHAR(255),
+    IN p_preferredStartDate DATE,
+    IN p_preferredSchedule VARCHAR(255),
+    IN p_fullDay VARCHAR(255),
+    IN p_halfDay VARCHAR(255),
+    IN p_parentSignEnroll VARCHAR(255),
+    IN p_adminSignEnroll VARCHAR(255),
+    IN p_parent_sign_date_enroll VARCHAR(255),
+    IN p_admin_sign_date_ach_enroll VARCHAR(255)
+)
+BEGIN
+    INSERT INTO enrollment_form (
+        child_id,
+        child_first_name,
+        point_one_field_three,
+        point_two_initial_here,
+        point_three_initial_here,
+        point_four_initial_here,
+        point_five_initial_here,
+        point_six_initial_here,
+        point_seven_initial_here,
+        point_eight_initial_here,
+        point_nine_initial_here,
+        point_ten_initial_here,
+        point_eleven_initial_here,
+        point_twelve_initial_here,
+        point_thirteen_initial_here,
+        point_fourteen_initial_here,
+        point_fifteen_initial_here,
+        point_sixteen_initial_here,
+        point_seventeen_initial_here,
+        point_eighteen_initial_here,
+        point_ninteen_initial_here,
+        preferred_start_date,
+        preferred_schedule,
+        full_day,
+        half_day,
+        parent_sign_enroll,
+        admin_sign_enroll,
+        is_active,
+        parent_sign_date_enroll,
+        admin_sign_date_enroll
+    )
+    VALUES (
+        p_childId,
+        p_enrollmentName,
+        p_pointOneFieldThree,
+        p_pointTwoInitialHere,
+        p_pointThreeInitialHere,
+        p_pointFourInitialHere,
+        p_pointFiveInitialHere,
+        p_pointSixInitialHere,
+        p_pointSevenInitialHere,
+        p_pointEightInitialHere,
+        p_pointNineInitialHere,
+        p_pointTenInitialHere,
+        p_pointElevenInitialHere,
+        p_pointTwelveInitialHere,
+        p_pointThirteenInitialHere,
+        p_pointFourteenInitialHere,
+        p_pointFifteenInitialHere,
+        p_pointSixteenInitialHere,
+        p_pointSeventeenInitialHere,
+        p_pointEighteenInitialHere,
+        p_point_ninteen_initial_here,
+        p_preferredStartDate,
+        p_preferredSchedule,
+        p_fullDay,
+        p_halfDay,
+        p_parentSignEnroll,
+        p_adminSignEnroll,
+        TRUE,
+        p_parent_sign_date_enroll,
+        p_admin_sign_date_enroll
+    );
+END
+
+--Retrieve record based on child form
+CREATE DEFINER=`admin`@`%` PROCEDURE `spGetEnrollmentForm`(
+    IN p_child_id INT
+)
+BEGIN
+    SELECT * FROM enrollment_form
+    WHERE child_id = p_child_id AND is_active = TRUE;
+END
+
 --Retrieve all records
---Update record based on email-id
---Delete record based on email-id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spGetAllEnrollmentForms`()
+BEGIN
+    SELECT * FROM enrollment_form
+    WHERE is_active = TRUE;
+END
+
+--Update record based on child form
+CREATE DEFINER=`admin`@`%` PROCEDURE `spUpdateEnrollmentForm`(
+    IN p_childId INT,
+    IN p_enrollmentName VARCHAR(255),
+    IN p_pointOneFieldThree VARCHAR(255),
+    IN p_pointTwoInitialHere VARCHAR(255),
+    IN p_pointThreeInitialHere VARCHAR(255),
+    IN p_pointFourInitialHere VARCHAR(255),
+    IN p_pointFiveInitialHere VARCHAR(255),
+    IN p_pointSixInitialHere VARCHAR(255),
+    IN p_pointSevenInitialHere VARCHAR(255),
+    IN p_pointEightInitialHere VARCHAR(255),
+    IN p_pointNineInitialHere VARCHAR(255),
+    IN p_pointTenInitialHere VARCHAR(255),
+    IN p_pointElevenInitialHere VARCHAR(255),
+    IN p_pointTwelveInitialHere VARCHAR(255),
+    IN p_pointThirteenInitialHere VARCHAR(255),
+    IN p_pointFourteenInitialHere VARCHAR(255),
+    IN p_pointFifteenInitialHere VARCHAR(255),
+    IN p_pointSixteenInitialHere VARCHAR(255),
+    IN p_pointSeventeenInitialHere VARCHAR(255),
+    IN p_pointEighteenInitialHere VARCHAR(255),
+    IN p_point_ninteen_initial_here VARCHAR(255),
+    IN p_preferredStartDate DATE,
+    IN p_preferredSchedule VARCHAR(255),
+    IN p_fullDay VARCHAR(255),
+    IN p_halfDay VARCHAR(255),
+    IN p_parentSignEnroll VARCHAR(255),
+    IN p_adminSignEnroll VARCHAR(255),
+    IN p_parent_sign_date_enroll VARCHAR(255),
+    IN p_admin_sign_date_enroll VARCHAR(255)
+)
+BEGIN
+    UPDATE enrollment_form
+    SET 
+        child_first_name = COALESCE(p_enrollmentName, child_first_name),
+        point_one_field_three = COALESCE(p_pointOneFieldThree, point_one_field_three),
+        point_two_initial_here = COALESCE(p_pointTwoInitialHere, point_two_initial_here),
+        point_three_initial_here = COALESCE(p_pointThreeInitialHere, point_three_initial_here),
+        point_four_initial_here = COALESCE(p_pointFourInitialHere, point_four_initial_here),
+        point_five_initial_here = COALESCE(p_pointFiveInitialHere, point_five_initial_here),
+        point_six_initial_here = COALESCE(p_pointSixInitialHere, point_six_initial_here),
+        point_seven_initial_here = COALESCE(p_pointSevenInitialHere, point_seven_initial_here),
+        point_eight_initial_here = COALESCE(p_pointEightInitialHere, point_eight_initial_here),
+        point_nine_initial_here = COALESCE(p_pointNineInitialHere, point_nine_initial_here),
+        point_ten_initial_here = COALESCE(p_pointTenInitialHere, point_ten_initial_here),
+        point_eleven_initial_here = COALESCE(p_pointElevenInitialHere, point_eleven_initial_here),
+        point_twelve_initial_here = COALESCE(p_pointTwelveInitialHere, point_twelve_initial_here),
+        point_thirteen_initial_here = COALESCE(p_pointThirteenInitialHere, point_thirteen_initial_here),
+        point_fourteen_initial_here = COALESCE(p_pointFourteenInitialHere, point_fourteen_initial_here),
+        point_fifteen_initial_here = COALESCE(p_pointFifteenInitialHere, point_fifteen_initial_here),
+        point_sixteen_initial_here = COALESCE(p_pointSixteenInitialHere, point_sixteen_initial_here),
+        point_seventeen_initial_here = COALESCE(p_pointSeventeenInitialHere, point_seventeen_initial_here),
+        point_eighteen_initial_here = COALESCE(p_pointEighteenInitialHere, point_eighteen_initial_here),
+        point_ninteen_initial_here = COALESCE(p_point_ninteen_initial_here, point_ninteen_initial_here),
+        preferred_start_date = COALESCE(p_preferredStartDate, preferred_start_date),
+        preferred_schedule = COALESCE(p_preferredSchedule, preferred_schedule),
+        full_day = COALESCE(p_fullDay, full_day),
+        half_day = COALESCE(p_halfDay, half_day),
+        parent_sign_enroll = COALESCE(p_parentSignEnroll, parent_sign_enroll),
+        admin_sign_enroll = COALESCE(p_adminSignEnroll, admin_sign_enroll),
+        parent_sign_date_enroll = COALESCE(p_parent_sign_date_enroll, parent_sign_date_enroll),
+        admin_sign_date_enroll = COALESCE(p_admin_sign_date_enroll, admin_sign_date_enroll)
+    WHERE 
+        child_id = p_childId AND is_active = TRUE;
+END
+
+--Delete record based on child form
+CREATE DEFINER=`admin`@`%` PROCEDURE `spDeleteEnrollmentForm`(
+    IN p_childId INT
+)
+BEGIN
+    UPDATE enrollment_form
+    SET is_active = FALSE
+    WHERE child_id = p_childId;
+END
+
+
+                                                        --Parent Handbook CRUD--(missing)
+
+--Create record
+CREATE DEFINER=`admin`@`%` PROCEDURE `spCreateEmptyParentHandbook`(
+    IN p_child_id INT
+)
+BEGIN
+    INSERT INTO parent_handbook (
+        child_id
+    ) VALUES (
+        p_child_id
+    );
+END
+
+--Retrieve record based on child id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spGetParentHandbook`(
+    IN p_childId INT
+)
+BEGIN
+    SELECT * FROM parent_handbook
+    WHERE child_id = p_childId AND is_active = TRUE;
+END
+
+--Retrieve all records
+CREATE DEFINER=`admin`@`%` PROCEDURE `spGetAllParentHandbooks`()
+BEGIN
+    SELECT * FROM parent_handbook
+    WHERE is_active = TRUE;
+END
+
+--Update record based on child id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spUpdateParentHandbook`(
+    IN p_child_id INT,
+    IN p_welcome_goddard_agreement VARCHAR(255),
+    IN p_mission_statement_agreement VARCHAR(255),
+    IN p_general_information_agreement VARCHAR(255),
+    IN p_medical_care_provider_agreement VARCHAR(255),
+    IN p_parent_access_agreement VARCHAR(255),
+    IN p_release_of_children_agreement VARCHAR(255),
+    IN p_registration_fees_agreement VARCHAR(255),
+    IN p_outside_engagements_agreement VARCHAR(255),
+    IN p_health_policies_agreement VARCHAR(255),
+    IN p_medication_procedures_agreement VARCHAR(255),
+    IN p_bring_to_school_agreement VARCHAR(255),
+    IN p_rest_time_agreement VARCHAR(255),
+    IN p_training_philosophy_agreement VARCHAR(255),
+    IN p_affiliation_policy_agreement VARCHAR(255),
+    IN p_security_issue_agreement VARCHAR(255),
+    IN p_expulsion_policy_agreement VARCHAR(255),
+    IN p_addressing_individual_child_agreement VARCHAR(255),
+    IN p_finalword_agreement VARCHAR(255),
+    IN p_parent_sign_handbook VARCHAR(255),
+    IN p_admin_sign_handbook VARCHAR(255),
+    IN p_parent_sign_date_handbook VARCHAR(255),
+    IN p_admin_sign_date_handbook VARCHAR(255)
+)
+BEGIN
+    UPDATE parent_handbook
+    SET 
+        welcome_goddard_agreement = COALESCE(p_welcome_goddard_agreement, welcome_goddard_agreement),
+        mission_statement_agreement = COALESCE(p_mission_statement_agreement, mission_statement_agreement),
+        general_information_agreement = COALESCE(p_general_information_agreement, general_information_agreement),
+        medical_care_provider_agreement = COALESCE(p_medical_care_provider_agreement, medical_care_provider_agreement),
+        parent_access_agreement = COALESCE(p_parent_access_agreement, parent_access_agreement),
+        release_of_children_agreement = COALESCE(p_release_of_children_agreement, release_of_children_agreement),
+        registration_fees_agreement = COALESCE(p_registration_fees_agreement, registration_fees_agreement),
+        outside_engagements_agreement = COALESCE(p_outside_engagements_agreement, outside_engagements_agreement),
+        health_policies_agreement = COALESCE(p_health_policies_agreement, health_policies_agreement),
+        medication_procedures_agreement = COALESCE(p_medication_procedures_agreement, medication_procedures_agreement),
+        bring_to_school_agreement = COALESCE(p_bring_to_school_agreement, bring_to_school_agreement),
+        rest_time_agreement = COALESCE(p_rest_time_agreement, rest_time_agreement),
+        training_philosophy_agreement = COALESCE(p_training_philosophy_agreement, training_philosophy_agreement),
+        affiliation_policy_agreement = COALESCE(p_affiliation_policy_agreement, affiliation_policy_agreement),
+        security_issue_agreement = COALESCE(p_security_issue_agreement, security_issue_agreement),
+        expulsion_policy_agreement = COALESCE(p_expulsion_policy_agreement, expulsion_policy_agreement),
+        addressing_individual_child_agreement = COALESCE(p_addressing_individual_child_agreement, addressing_individual_child_agreement),
+        finalword_agreement = COALESCE(p_finalword_agreement, finalword_agreement),
+        parent_sign_handbook = COALESCE(p_parent_sign_handbook, parent_sign_handbook),
+        admin_sign_handbook = COALESCE(p_admin_sign_handbook, admin_sign_handbook),
+        parent_sign_date_handbook = COALESCE(p_parent_sign_date_handbook, parent_sign_date_handbook),
+        admin_sign_date_handbook = COALESCE(p_admin_sign_date_handbook, admin_sign_date_handbook)
+        
+    WHERE 
+        child_id = p_child_id AND is_active = TRUE;
+END
+
+--Delete record based on child id
+CREATE DEFINER=`admin`@`%` PROCEDURE `spDeleteParentHandbook`(
+    IN p_child_id INT
+)
+BEGIN
+    UPDATE parent_handbook
+    SET is_active = FALSE
+    WHERE child_id = p_child_id;
+END
+
+-- CRUD--
+--Create record
+--Retrieve record based on 
+--Retrieve all records
+--Update record based on 
+--Delete record based on 
+

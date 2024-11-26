@@ -1,6 +1,6 @@
-                                        --Goddard Database Tables--
+                                                          --Goddard Database Tables--
 
---admin_info table
+--Admin Info Table
 CREATE TABLE `admin_info` (
   `email_id` varchar(255) NOT NULL,
   `password` varchar(255) DEFAULT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE `admin_info` (
   PRIMARY KEY (`email_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---admission_form table
+--Admission Form Table
 CREATE TABLE `admission_form` (
   `child_id` int NOT NULL,
   `additional_parent_id` int DEFAULT NULL,
@@ -159,7 +159,7 @@ CREATE TABLE `admission_form` (
   CONSTRAINT `fk_emergency_contact_third` FOREIGN KEY (`emergency_contact_third_id`) REFERENCES `emergency_details` (`child_emergency_contact_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---all_form_info table
+--All Form Info Table
 CREATE TABLE `all_form_info` (
   `form_id` int NOT NULL AUTO_INCREMENT,
   `main_topic` varchar(255) DEFAULT NULL,
@@ -187,7 +187,7 @@ CREATE TABLE `all_form_info` (
   PRIMARY KEY (`form_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---authorization_form table
+--Authorization Form Table
 CREATE TABLE `authorization_form` (
   `child_id` int NOT NULL,
   `bank_routing` varchar(255) DEFAULT NULL,
@@ -203,7 +203,7 @@ CREATE TABLE `authorization_form` (
   PRIMARY KEY (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---care_provider table
+--Care Provider Table
 CREATE TABLE `care_provider` (
   `child_care_provider_id` int NOT NULL AUTO_INCREMENT,
   `child_care_provider_name` varchar(255) NOT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE `care_provider` (
   PRIMARY KEY (`child_care_provider_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---child_info table
+--Child Info Table
 CREATE TABLE `child_info` (
   `child_id` int NOT NULL AUTO_INCREMENT,
   `parent_id` varchar(255) DEFAULT NULL,
@@ -230,7 +230,7 @@ CREATE TABLE `child_info` (
   CONSTRAINT `child_info_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `class_details` (`class_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---class_details table
+--Class Details Table
 CREATE TABLE `class_details` (
   `class_id` int NOT NULL AUTO_INCREMENT,
   `class_name` varchar(255) NOT NULL,
@@ -238,7 +238,7 @@ CREATE TABLE `class_details` (
   PRIMARY KEY (`class_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---class_form_repository table
+--Class Form Repository Table
 CREATE TABLE `class_form_repository` (
   `class_id` int NOT NULL,
   `form_id` int NOT NULL,
@@ -249,7 +249,7 @@ CREATE TABLE `class_form_repository` (
   CONSTRAINT `class_form_repository_ibfk_2` FOREIGN KEY (`class_id`) REFERENCES `class_details` (`class_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---dentist table
+--Dentist Table
 CREATE TABLE `dentist` (
   `child_dentist_id` int NOT NULL AUTO_INCREMENT,
   `child_dentist_name` varchar(255) DEFAULT NULL,
@@ -262,7 +262,7 @@ CREATE TABLE `dentist` (
   PRIMARY KEY (`child_dentist_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---emergency_details table
+--Emergency Details Table
 CREATE TABLE `emergency_details` (
   `child_emergency_contact_id` int NOT NULL AUTO_INCREMENT,
   `child_emergency_contact_name` varchar(255) DEFAULT NULL,
@@ -276,7 +276,7 @@ CREATE TABLE `emergency_details` (
   PRIMARY KEY (`child_emergency_contact_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---enrollment_form table
+--Enrollment Table
 CREATE TABLE `enrollment_form` (
   `child_id` int NOT NULL,
   `child_first_name` varchar(255) DEFAULT NULL,
@@ -311,7 +311,7 @@ CREATE TABLE `enrollment_form` (
   PRIMARY KEY (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---form_repositary table
+--Form Repository Table
 CREATE TABLE `form_repositary` (
   `form_id` int NOT NULL AUTO_INCREMENT,
   `form_name` varchar(255) NOT NULL,
@@ -320,7 +320,7 @@ CREATE TABLE `form_repositary` (
   UNIQUE KEY `form_name` (`form_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---parent_handbook table
+--Parent Handbook Table
 CREATE TABLE `parent_handbook` (
   `child_id` int NOT NULL,
   `welcome_goddard_agreement` varchar(255) DEFAULT NULL,
@@ -349,7 +349,7 @@ CREATE TABLE `parent_handbook` (
   PRIMARY KEY (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---parent_info table
+--Parent Info Table
 CREATE TABLE `parent_info` (
   `parent_id` int NOT NULL AUTO_INCREMENT,
   `parent_email` varchar(255) DEFAULT NULL,
@@ -377,7 +377,7 @@ CREATE TABLE `parent_info` (
   PRIMARY KEY (`parent_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---parent_invite_info table
+--Parent Invite Info Table
 CREATE TABLE `parent_invite_info` (
   `invite_email` varchar(255) NOT NULL,
   `parent_id` int DEFAULT NULL,
@@ -388,7 +388,7 @@ CREATE TABLE `parent_invite_info` (
   CONSTRAINT `parent_invite_info_ibfk_1` FOREIGN KEY (`parent_id`) REFERENCES `parent_info` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
---student_form_repository table
+--Student Form Repository Table
 CREATE TABLE `student_form_repository` (
   `child_id` int NOT NULL,
   `form_id` int NOT NULL,
