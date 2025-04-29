@@ -11,6 +11,7 @@ cryptography = "*"
 yagmail = "*"
 shortuuid = "*"
 uvicorn = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
