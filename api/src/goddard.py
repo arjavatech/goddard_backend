@@ -77,6 +77,7 @@ async def get_admin_info(email_id: str):
 
     try:
         with connection.cursor() as cursor:
+            email_id = email_id.lower()  # Ensure email_id is in lowercase
             sql = "CALL spGetAdminInfo(%s);"
             cursor.execute(sql, (email_id,))
             result = cursor.fetchone()
@@ -118,6 +119,7 @@ async def update_admin_info(email_id: str, admin_info: AdminInfo = Body(...)):
 
     try:
         with connection.cursor() as cursor:
+            email_id = email_id.lower()
             sql = "CALL spUpdateAdminInfo(%s, %s, %s, %s);"
             cursor.execute(sql, (email_id, admin_info.password, admin_info.designation, admin_info.apporved_by))
             connection.commit()
@@ -138,6 +140,7 @@ async def delete_admin_info(email_id: str):
 
     try:
         with connection.cursor() as cursor:
+            email_id = email_id.lower()
             sql = "CALL spDeleteAdminInfo(%s);"
             cursor.execute(sql, (email_id,))
             connection.commit()
@@ -173,7 +176,7 @@ async def create_parent_invite(invite: ParentInvite = Body(...)):
             uuid1 = shortuuid.uuid()
             invite_id = f"https://arjavatech.github.io/goddard-frontend-test/signup.html?invite_id={uuid1}"
             sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
-            cursor.execute(sql, (invite.invite_email, invite_id, invite.parent_id, current_utc_time))
+            cursor.execute(sql, (invite.invite_email.lower(), invite_id, invite.parent_id, current_utc_time))
             connection.commit()
 
             return {"message": "Parent invite successfully created !"}
@@ -193,6 +196,7 @@ async def get_parent_invite(email: str):
 
     try:
         with connection.cursor() as cursor:
+            email = email.lower()
             sql = "CALL spGetParentInvite(%s);"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
@@ -234,6 +238,7 @@ async def update_parent_invite(email: str, parent_name: str, child_full_name: st
 
     try:
         with connection.cursor() as cursor:
+            email = email.lower()
             # Get the current UTC time
             current_utc_time = datetime.utcnow()
             uuid1 = shortuuid.uuid()
@@ -259,6 +264,7 @@ async def delete_parent_invite(email: str):
 
     try:
         with connection.cursor() as cursor:
+            email = email.lower()
             sql = "CALL spDeleteParentInvite(%s);"
             cursor.execute(sql, (email,))
             connection.commit()
@@ -680,7 +686,7 @@ async def create_parent_info(parentinfo: ParentInfo = Body()):
          with connection.cursor() as cursor:
             sql = "CALL spCreateParentInfoWithAllDetails(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (
-                parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                parentinfo.parent_email.lower(), parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                 parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
                 parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                 parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
@@ -759,7 +765,7 @@ def update_parent_info(id: int, parentinfo: ParentInfo = Body(...)):
         with connection.cursor() as cursor:
             sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, (
-                id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                id, parentinfo.parent_email.lower(), parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                 parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
                 parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                 parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
@@ -1534,7 +1540,7 @@ class AdmissionForm(BaseModel):
     emergency_contact_third_id: Optional[int] = None
     pointer:Optional[int] = None 
     agree_all_above_info_is_correct: Optional[str] = None  
-    parent_sign_date_admission: Optional[str] = None
+    parent_sign_date_admission: Optional[int] = None
     admin_sign_date_admission: Optional[int] = None
     child_dentist_name: Optional[str] = None  
     dentist_telephone_number: Optional[str] = None  
@@ -1786,7 +1792,7 @@ class AuthorizationForm(BaseModel):
     i: Optional[str] = None
     parent_sign_ach: Optional[str] = None
     admin_sign_ach: Optional[str] = None
-    parent_sign_date_ach: Optional[str] = None
+    parent_sign_date_ach: Optional[int] = None
     admin_sign_date_ach: Optional[int] = None
     ach_pointer: Optional[int] = None
     pointer:Optional[int] = None 
@@ -1950,7 +1956,7 @@ class EnrollmentForm(BaseModel):
     half_day: Optional[str] = None
     parent_sign_enroll: Optional[str] = None
     admin_sign_enroll: Optional[str] = None
-    parent_sign_date_enroll: Optional[str] = None
+    parent_sign_date_enroll: Optional[int] = None
     admin_sign_date_enroll: Optional[int] = None
     enroll_pointer: Optional[int] = None
     pointer:Optional[int] = None 
@@ -2114,7 +2120,7 @@ class ParentHandbook(BaseModel):
     finalword_agreement: Optional[str] = None
     parent_sign_handbook: Optional[str] = None
     admin_sign_handbook: Optional[str] = None
-    parent_sign_date_handbook: Optional[str] = None
+    parent_sign_date_handbook: Optional[int] = None
     admin_sign_date_handbook: Optional[int] = None
     handbook_pointer: Optional[int] = None
     pointer:Optional[int] = None 
@@ -2790,13 +2796,13 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
         with connection.cursor() as cursor:
 
             parent_invite_chk_sql = "CALL spGetParentInvite(%s)"
-            cursor.execute(parent_invite_chk_sql, (parent_invite.invite_email,))
+            cursor.execute(parent_invite_chk_sql, (parent_invite.invite_email.lower(),))
             parent_invite_chk_sql_result = cursor.fetchone() 
             if parent_invite_chk_sql_result:
                 return {"error": "Already we send an mail. Please try different email"}
             
             parent_check_sql = "CALL spGetParentEmail(%s)"
-            cursor.execute(parent_check_sql, (parent_invite.invite_email,))
+            cursor.execute(parent_check_sql, (parent_invite.invite_email.lower(),))
             parent_check_result = cursor.fetchone() 
             if parent_check_result:
                 return {"error": "Email Already Registered with another mail. Please try different email"}
@@ -2876,7 +2882,7 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
 
                 # Call stored procedure to trigger email invite
                 email_trigger_sql = "CALL spCreateParentInvite(%s, %s, %s, %s);"
-                cursor.execute(email_trigger_sql, (parent_invite.invite_email, invite_id, parent_id, current_utc_time))
+                cursor.execute(email_trigger_sql, (parent_invite.invite_email.lower(), invite_id, parent_id, current_utc_time))
                 connection.commit()
 
                 # Set up email parameters
@@ -2905,12 +2911,12 @@ async def parent_invite_create(parent_invite: ParentInviteClass = Body(...)):
                 yag = yagmail.SMTP(user=sender, password=app_password)
 
                 # Sending the email
-                yag.send(to=parent_invite.invite_email, subject=subject, contents=html_content)
+                yag.send(to=parent_invite.invite_email.lower(), subject=subject, contents=html_content)
 
                 return {"message": "Parent invite created and Email sent successfully!"}
 
     except pymysql.MySQLError as err:
-        return {"error": f"Parent invite mail with id {parent_invite.invite_email} is already exists!!!"}
+        return {"error": f"Parent invite mail with id {parent_invite.invite_email.lower()} is already exists!!!"}
     finally:
         if connection:
             connection.close()
@@ -2923,6 +2929,8 @@ async def parent_invite_create(invite_email: str):
 
     try:
         with connection.cursor() as cursor:
+
+            invite_email = invite_email.lower()
 
             parent_table_sql = """
             CALL spGetParentInvite(%s);
@@ -3006,6 +3014,7 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
 
             invite_id = sign_up_data.get("invite_id")
             email = sign_up_data.get("email")
+            email = email.lower()
             password = sign_up_data.get("password")
 
             invite_check_sql = "CALL spGetParentIdInInviteTable(%s);"
@@ -3013,6 +3022,8 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
             invite_info_result = cursor.fetchone()
 
             parent_invite_email = invite_info_result["invite_email"]
+
+            parent_invite_email = parent_invite_email.lower()
 
             if parent_invite_email != email :
                 return {"error" : "The email address used for the invitation does not match the one provided during signup."}
@@ -3048,7 +3059,7 @@ async def sign_up_create(sign_up_data: dict = Body(...)):
                 if result:
                     parent_id = result['parent_id']
                     password_update_sql = "CALL spUpdateParentInfoPassword(%s, %s, %s, %s);"
-                    cursor.execute(password_update_sql, (parent_id,email, password, invite_id))
+                    cursor.execute(password_update_sql, (parent_id,email.lower(), password, invite_id))
                     connection.commit()
 
                     return {"message": "SignUp Data successfully updated"}
@@ -3070,6 +3081,7 @@ async def signin_check(sign_up_data: dict = Body(...)):
     try:
         with connection.cursor() as cursor:
             email = sign_up_data.get("email")
+            email = email.lower()
             password = sign_up_data.get("password")
             sql = "CALL spGetAdminInfo(%s);"
             cursor.execute(sql, (email,))
@@ -3177,6 +3189,7 @@ async def get_parent_invite_status(email: str):
 
     try:
         with connection.cursor() as cursor:
+            email = email.lower()
             sql = "CALL spGetParentInviteStatus(%s)"
             cursor.execute(sql, email)
             result = cursor.fetchone()
@@ -3668,7 +3681,7 @@ class AdmissionFormUpdate(BaseModel):
     emergency_contact_info: Optional[list[EmergencyDetail]] = None
     pointer:Optional[int] = None 
     agree_all_above_info_is_correct: Optional[str] = None
-    parent_sign_date_admission: Optional[str] = None
+    parent_sign_date_admission: Optional[int] = None
     admin_sign_date_admission: Optional[int] = None
     child_dentist_name: Optional[str] = None  
     dentist_telephone_number: Optional[str] = None  
@@ -3749,7 +3762,7 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                 parentinfo = admission_form.primary_parent_info
                 parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 cursor.execute(parentinfo_sql, (
-                    parentinfo.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                    parentinfo.parent_id, parentinfo.parent_email.lower(), parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                     parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
                     parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                     parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
@@ -3760,10 +3773,10 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
 
             if admission_form.additional_parent_info is not None:
                 parentinfo = admission_form.additional_parent_info
-                if parentinfo.parent_id is not None and (parentinfo.parent_email is not None or parentinfo.parent_name is not None or parentinfo.parent_street_address is not None or parentinfo.parent_city_address is not None or parentinfo.parent_state_address is not None or parentinfo.parent_zip_address is not None or parentinfo.home_telephone_number is not None or parentinfo.business_name is not None or parentinfo.work_hours_from is not None or parentinfo.work_hours_to is not None or parentinfo.business_telephone_number is not None or parentinfo.business_cell_number is not None):
+                if parentinfo.parent_id is not None and (parentinfo.parent_email.lower() is not None or parentinfo.parent_name is not None or parentinfo.parent_street_address is not None or parentinfo.parent_city_address is not None or parentinfo.parent_state_address is not None or parentinfo.parent_zip_address is not None or parentinfo.home_telephone_number is not None or parentinfo.business_name is not None or parentinfo.work_hours_from is not None or parentinfo.work_hours_to is not None or parentinfo.business_telephone_number is not None or parentinfo.business_cell_number is not None):
                     parentinfo_sql = "CALL spUpdateParentInfo(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                     cursor.execute(parentinfo_sql, (
-                        parentinfo.parent_id, parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                        parentinfo.parent_id, parentinfo.parent_email.lower(), parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                         parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
                         parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                         parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
@@ -3776,11 +3789,11 @@ async def update_student_admission_segment(child_id: int, admission_form: Admiss
                         child_id,
                         parentinfo.parent_id
                     ))
-                elif parentinfo.parent_id is None and (parentinfo.parent_email is not None or parentinfo.parent_name is not None or parentinfo.parent_street_address is not None or parentinfo.parent_city_address is not None or parentinfo.parent_state_address is not None or parentinfo.parent_zip_address is not None or parentinfo.home_telephone_number is not None or parentinfo.business_name is not None or parentinfo.work_hours_from is not None or parentinfo.work_hours_to is not None or parentinfo.business_telephone_number is not None or parentinfo.business_cell_number is not None):
+                elif parentinfo.parent_id is None and (parentinfo.parent_email.lower() is not None or parentinfo.parent_name is not None or parentinfo.parent_street_address is not None or parentinfo.parent_city_address is not None or parentinfo.parent_state_address is not None or parentinfo.parent_zip_address is not None or parentinfo.home_telephone_number is not None or parentinfo.business_name is not None or parentinfo.work_hours_from is not None or parentinfo.work_hours_to is not None or parentinfo.business_telephone_number is not None or parentinfo.business_cell_number is not None):
                     parent_id = None
                     ap_sql = "CALL spCreateParentInfoReturnId(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, @parent_id)"
                     cursor.execute(ap_sql, (
-                        parentinfo.parent_email, parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
+                        parentinfo.parent_email.lower(), parentinfo.parent_name, parentinfo.parent_street_address, parentinfo.parent_city_address,
                         parentinfo.parent_state_address, parentinfo.parent_zip_address, parentinfo.home_telephone_number,
                         parentinfo.home_cell_number, parentinfo.business_name, parentinfo.work_hours_from,
                         parentinfo.work_hours_to, parentinfo.business_telephone_number, parentinfo.business_street_address,
@@ -4045,7 +4058,7 @@ async def password_change(email: str):
 
     try:
         with connection.cursor() as cursor:
-
+            email = email.lower()
             sql = "CALL spGetParentEmail(%s);"
             cursor.execute(sql, (email,))
             result = cursor.fetchone()
@@ -4109,6 +4122,7 @@ async def update_parent_password(login_info = Body(...)):
     try:
         with connection.cursor() as cursor:
             email = login_info.get("email")
+            email = email.lower()
             password = login_info.get("password")
             signup_url = login_info.get("signup_url")
 
@@ -4253,7 +4267,6 @@ class UpdateFormRequest(BaseModel):
     form_ids: List[int]
     state: int
       
-
 @app.put("/update_form_repo_state")
 def update_forms(request: UpdateFormRequest):
     # Convert list of form_ids to a comma-separated string
@@ -4487,6 +4500,4 @@ async def get_all_classes():
         if connection:
             connection.close()
 
-
-  
 handler=mangum.Mangum(app)
